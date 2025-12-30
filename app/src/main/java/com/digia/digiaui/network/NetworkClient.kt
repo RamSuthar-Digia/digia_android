@@ -1,0 +1,279 @@
+package com.digia.digiaui.network
+
+import android.content.Context
+import android.os.Build
+import com.digia.digiaui.utils.DeveloperConfig
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response as OkHttpResponse
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+
+class NetworkClient(
+    val baseUrl: String,
+    digiaHeaders: Map<String, String>,
+    projectNetworkConfiguration: NetworkConfiguration,
+    developerConfig: com.digia.digiaui.init.DeveloperConfig = null,
+    val context: Context? = null
+) {
+    val digiaClient: OkHttpClient
+    val projectClient: OkHttpClient
+    private val mutableDigiaHeaders = digiaHeaders.toMutableMap()
+    private val mutableProjectHeaders = projectNetworkConfiguration.defaultHeaders.mapValues { it.value.toString() }.toMutableMap()
+
+    /// Checks if the app is in debug mode
+    private val isDebugMode: Boolean
+        get() = try {
+            // Try BuildConfig.DEBUG first (most common)
+            val buildConfigClass = Class.forName("com.digia.digiaui.BuildConfig")
+            val debugField = buildConfigClass.getField("DEBUG")
+            debugField.getBoolean(null)
+        } catch (_: Exception) {
+            // Fallback: check build type
+            Build.TYPE == "debug" || Build.TYPE == "eng"
+        }
+
+    init {
+        if (baseUrl.isEmpty()) {
+            throw IllegalArgumentException("Invalid BaseUrl")
+        }
+
+        digiaClient = createDigiaClient(mutableDigiaHeaders, developerConfig)
+        projectClient = createProjectClient(mutableProjectHeaders, developerConfig)
+    }
+
+    private fun createDigiaClient(
+            headers: Map<String, String>,
+            developerConfig: DeveloperConfig?
+    ): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+                .connectTimeout(1000, TimeUnit.SECONDS)
+                .addInterceptor { chain ->
+                    val request = chain.request()
+                            .newBuilder()
+                            .addHeader("Content-Type", "application/json")
+                            .apply { headers.forEach { (k, v) -> addHeader(k, v) } }
+                            .build()
+                    chain.proceed(request)
+                }
+
+        configureDeveloperOptions(builder, developerConfig)
+        return builder.build()
+    }
+
+    private fun createProjectClient(
+            headers: Map<String, String>,
+            developerConfig: DeveloperConfig?
+    ): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+                .connectTimeout(30000, TimeUnit.MILLISECONDS) // Default 30 seconds
+                .addInterceptor { chain ->
+                    val request = chain.request()
+                            .newBuilder()
+                            .apply { headers.forEach { (k, v) -> addHeader(k, v) } }
+                            .build()
+                    chain.proceed(request)
+                }
+
+        // Add interceptor if provided
+        developerConfig?.inspector?.networkObserver?.interceptor?.let { interceptor ->
+            builder.addInterceptor(interceptor)
+        }
+
+        configureDeveloperOptions(builder, developerConfig)
+        return builder.build()
+    }
+
+    private fun configureDeveloperOptions(
+            builder: OkHttpClient.Builder,
+            developerConfig: DeveloperConfig?
+    ) {
+        developerConfig?.proxyUrl?.let { proxyUrl ->
+            if (isDebugMode) {
+                val parts = proxyUrl.split(":")
+                val host = parts[0]
+                val port = parts.getOrNull(1)?.toIntOrNull() ?: 8080
+                val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(host, port))
+                builder.proxy(proxy)
+
+                val trustAllCerts =
+                        arrayOf<TrustManager>(
+                                object : X509TrustManager {
+                                    override fun checkClientTrusted(
+                                            chain: Array<out X509Certificate>?,
+                                            authType: String?
+                                    ) {}
+                                    override fun checkServerTrusted(
+                                            chain: Array<out X509Certificate>?,
+                                            authType: String?
+                                    ) {}
+                                    override fun getAcceptedIssuers(): Array<X509Certificate> =
+                                            arrayOf()
+                                }
+                        )
+
+                val sslContext = SSLContext.getInstance("SSL")
+                sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+                val sslSocketFactory = sslContext.socketFactory
+
+                builder.sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
+                builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
+            }
+        }
+    }
+
+    suspend fun requestProject(
+            bodyType: BodyType,
+            url: String,
+            method: HttpMethod,
+            additionalHeaders: Map<String, String>? = null,
+            data: Any? = null,
+            apiName: String? = null
+    ): OkHttpResponse {
+        return withContext(Dispatchers.IO) {
+            val requestBody =
+                    when (bodyType) {
+                        BodyType.JSON ->
+                                data?.toString()?.toRequestBody("application/json".toMediaTypeOrNull())
+                        BodyType.MULTIPART -> data as? RequestBody
+                        BodyType.FORM_URLENCODED ->
+                                data?.toString()
+                                        ?.toRequestBody(
+                                                "application/x-www-form-urlencoded".toMediaTypeOrNull()
+                                        )
+                        BodyType.GRAPHQL ->
+                                data?.toString()?.toRequestBody("application/json".toMediaTypeOrNull())
+                    }
+
+            // Remove headers already in base headers to avoid conflicts
+            val commonKeys = mutableProjectHeaders.keys.intersect(additionalHeaders?.keys ?: emptySet())
+            val filteredAdditionalHeaders = additionalHeaders?.filterKeys { it !in commonKeys }
+
+            val requestBuilder = Request.Builder()
+                    .url(url)
+                    .method(method.stringValue, requestBody)
+                    .addHeader("Content-Type", bodyType.contentTypeHeader ?: "application/json")
+
+            filteredAdditionalHeaders?.forEach { (k, v) -> requestBuilder.addHeader(k, v) }
+
+            projectClient.newCall(requestBuilder.build()).execute()
+        }
+    }
+
+    suspend fun <T> requestInternal(
+            method: HttpMethod,
+            path: String,
+            fromJsonT: (Any?) -> T,
+            data: Any? = null,
+            headers: Map<String, String> = emptyMap()
+    ): BaseResponse<T> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val requestBody =
+                        data?.toString()?.toRequestBody("application/json".toMediaTypeOrNull())
+
+                val fullUrl = "$baseUrl/$path".replace("//", "/")
+
+                val request = Request.Builder()
+                        .url(fullUrl)
+                        .method(method.stringValue, requestBody)
+                        .apply { headers.forEach { (k, v) -> addHeader(k, v) } }
+                        .build()
+
+                val response = digiaClient.newCall(request).execute()
+
+                if (response.isSuccessful) {
+                    val json = response.body?.string()
+                    @Suppress("UNCHECKED_CAST")
+                    val map = Gson().fromJson(json, Map::class.java) as Map<String, Any?>
+                    BaseResponse.fromJson(map, fromJsonT)
+                } else {
+                    BaseResponse(isSuccess = false, data = null, error = mapOf("code" to response.code))
+                }
+            } catch (e: IOException) {
+                throw RuntimeException("Error making HTTP request: $e")
+            }
+        }
+    }
+
+    fun replaceProjectHeaders(headers: Map<String, String>) {
+        mutableProjectHeaders.clear()
+        mutableProjectHeaders.putAll(headers)
+    }
+
+    fun addVersionHeader(version: Int) {
+        mutableDigiaHeaders["x-digia-project-version"] = version.toString()
+    }
+
+    companion object {
+        fun getDefaultDigiaHeaders(
+                packageVersion: String,
+                accessKey: String,
+                platform: String,
+                uuid: String?,
+                packageName: String,
+                appVersion: String,
+                appBuildNumber: String,
+                environment: String,
+                buildSignature: String
+        ): Map<String, String> {
+            val headers =
+                    mutableMapOf(
+                            "x-digia-version" to packageVersion,
+                            "x-digia-project-id" to accessKey,
+                            "x-digia-platform" to platform,
+                            "x-app-package-name" to packageName,
+                            "x-app-version" to appVersion,
+                            "x-app-build-number" to appBuildNumber,
+                            "x-digia-environment" to environment
+                    )
+            uuid?.let { headers["x-digia-device-id"] = it }
+            if (buildSignature.isNotEmpty()) {
+                headers["x-app-signature"] = buildSignature
+            }
+            return headers
+        }
+    }
+
+    suspend fun multipartRequestProject(
+            bodyType: BodyType,
+            url: String,
+            method: HttpMethod,
+            additionalHeaders: Map<String, String>? = null,
+            data: RequestBody? = null,
+            uploadProgress: (Int, Int) -> Unit,
+            apiName: String? = null
+    ): OkHttpResponse {
+        return withContext(Dispatchers.IO) {
+            // Remove connection timeout for large file uploads
+            val client = projectClient.newBuilder().connectTimeout(0, TimeUnit.MILLISECONDS).build()
+
+            val requestBuilder = Request.Builder()
+                    .url(url)
+                    .method(method.stringValue, data)
+                    .addHeader(
+                            "Content-Type",
+                            bodyType.contentTypeHeader ?: "multipart/form-data"
+                    )
+
+            // Remove headers already in base headers to avoid conflicts
+            val commonKeys = mutableProjectHeaders.keys.intersect(additionalHeaders?.keys ?: emptySet())
+            val filteredAdditionalHeaders = additionalHeaders?.filterKeys { it !in commonKeys }
+
+            filteredAdditionalHeaders?.forEach { (k, v) -> requestBuilder.addHeader(k, v) }
+
+            client.newCall(requestBuilder.build()).execute()
+        }
+    }
+}

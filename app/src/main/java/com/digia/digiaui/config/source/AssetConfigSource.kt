@@ -1,0 +1,68 @@
+package com.digia.digiaui.config.source
+
+import com.digia.digiaui.config.ConfigException
+import com.digia.digiaui.config.ConfigProvider
+import com.digia.digiaui.config.source.ConfigSource
+import com.digia.digiaui.config.model.DUIConfig
+import com.digia.digiaui.framework.logging.Logger
+import com.google.gson.Gson
+
+/**
+ * ConfigSource that loads configuration from bundled assets
+ *
+ * This is used as the fallback source for Release flavor, providing a burned-in configuration that
+ * is guaranteed to be available.
+ *
+ * The asset files should be placed in the assets/ directory:
+ * - assets/config.json (or custom appConfigPath)
+ * - assets/functions.json (or custom functionsPath)
+ *
+ * @param provider The ConfigProvider (used for context)
+ * @param appConfigPath Path to the app config asset file
+ * @param functionsPath Path to the functions asset file (optional)
+ */
+class AssetConfigSource(
+        private val provider: ConfigProvider,
+        private val appConfigPath: String = "config.json",
+        private val functionsPath: String? = "functions.json"
+) : ConfigSource {
+
+    override suspend fun getConfig(): DUIConfig {
+        try {
+            Logger.log("Loading config from assets: $appConfigPath")
+
+            // Read the asset file content
+            val jsonString =
+                    provider.networkClient
+                            .context
+                            ?.assets
+                            ?.open(appConfigPath)
+                            ?.bufferedReader()
+                            ?.use { it.readText() }
+                            ?: throw ConfigException.assetError(
+                                    "Context not available for asset loading"
+                            )
+
+            // Parse the JSON
+            val appConfig =
+                    Gson().fromJson(jsonString, DUIConfig::class.java)
+                            ?: throw ConfigException.invalidData("Failed to parse asset config")
+
+            // Initialize functions if path provided
+            functionsPath?.let {
+                try {
+                    provider.initFunctions(it)
+                } catch (e: Exception) {
+                    Logger.log("Functions file not found or failed to load: $it")
+                }
+            }
+
+            Logger.log("Successfully loaded config from assets")
+            return appConfig
+        } catch (e: ConfigException) {
+            throw e
+        } catch (e: Exception) {
+            throw ConfigException.assetError("Failed to load config from assets: ${e.message}", e)
+        }
+    }
+}
