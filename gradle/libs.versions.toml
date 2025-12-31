@@ -2,7 +2,7 @@
 digiaui = "1.0.0"
 kotlin = "1.8.10"
 compose = "1.4.3"
-composeBom = "2023.03.00"
+composeBom = "2025.12.01"
 coroutines = "1.7.3"
 
 [libraries]
@@ -10,9 +10,9 @@ coroutines = "1.7.3"
 digiaui = { module = "com.digia:digia-ui", version.ref = "digiaui" }
 
 # AndroidX Core
-androidx-core-ktx = "androidx.core:core-ktx:1.12.0"
-androidx-lifecycle-runtime-ktx = "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
-androidx-activity-compose = "androidx.activity:activity-compose:1.7.2"
+androidx-core-ktx = "androidx.core:core-ktx:1.17.0"
+androidx-lifecycle-runtime-ktx = "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
+androidx-activity-compose = "androidx.activity:activity-compose:1.12.2"
 
 # Compose
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
@@ -34,14 +34,14 @@ gson = "com.google.code.gson:gson:2.10.1"
 okhttp = "com.squareup.okhttp3:okhttp:4.12.0"
 
 # DataStore
-androidx-datastore-preferences = "androidx.datastore:datastore-preferences:1.0.0"
+androidx-datastore-preferences = "androidx.datastore:datastore-preferences:1.2.0"
 
 # ViewModel
-androidx-lifecycle-viewmodel-compose = "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2"
-androidx-lifecycle-runtime-compose = "androidx.lifecycle:lifecycle-runtime-compose:2.6.2"
+androidx-lifecycle-viewmodel-compose = "androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0"
+androidx-lifecycle-runtime-compose = "androidx.lifecycle:lifecycle-runtime-compose:2.10.0"
 
 # Navigation
-androidx-navigation-compose = "androidx.navigation:navigation-compose:2.7.6"
+androidx-navigation-compose = "androidx.navigation:navigation-compose:2.9.6"
 
 # Image Loading
 coil-compose = "io.coil-kt:coil-compose:2.5.0"
