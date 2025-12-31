@@ -1,6 +1,6 @@
 [versions]
 digiaui = "1.0.0"
-kotlin = "1.8.10"
+kotlin = "2.3.0"
 compose = "1.4.3"
 composeBom = "2023.03.00"
 coroutines = "1.7.3"
