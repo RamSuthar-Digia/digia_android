@@ -5,28 +5,6 @@
 
 **Pure Android Library Module** - Server-driven UI SDK for Jetpack Compose.
 
-## 📦 Library Module
-
-This repository contains only the `digia-ui` library module for integration into your Android projects.
-
-### Building the Library
-
-**Build the library:**
-```bash
-./gradlew :digia-ui:build
-```
-
-**Publish locally:**
-```bash
-./gradlew :digia-ui:publishToMavenLocal
-```
-
-**Use in your app:**
-```kotlin
-dependencies {
-    implementation("com.digia:digia-ui:1.0.0")
-}
-```
 
 ## 🚀 Quick Setup
 
