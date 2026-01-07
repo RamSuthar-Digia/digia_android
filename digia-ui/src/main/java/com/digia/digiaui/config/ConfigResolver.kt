@@ -35,7 +35,7 @@ class ConfigResolver(
     private val _flavorInfo: Flavor,
     private val _networkClient: NetworkClient,
     private val context: Context
-) : ConfigProvider {
+) : ConfigFetcher {
 
     private var _branchName: String? = null
     private var _functions: JSFunctions? = null

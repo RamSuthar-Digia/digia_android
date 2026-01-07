@@ -130,6 +130,30 @@ data class DUIConfig(
     }
 
     /**
+     * Gets a specific environment variable value.
+     *
+     * @param varName The name of the environment variable
+     * @return The value of the environment variable or null if not found
+     */
+    fun getEnvVariable(varName: String): Any? {
+        val variables = getEnvironmentVariables()
+        val variable = variables[varName] as? Map<String, Any> ?: return null
+        return variable["defaultValue"]
+    }
+
+    /**
+     * Gets all environment variables as a map of names to values.
+     *
+     * @return A map of environment variable names to their current values
+     */
+    fun getAllEnvVariables(): Map<String, Any?> {
+        val variables = getEnvironmentVariables()
+        return variables.mapValues { (_, value) ->
+            (value as? Map<String, Any>)?.get("defaultValue")
+        }
+    }
+
+    /**
      * Retrieves an API model configuration by its identifier.
      *
      * API models define the structure and configuration for making HTTP requests to specific

@@ -1,5 +1,7 @@
 package com.digia.digiaui.framework.models
 
+import com.digia.digiaui.framework.utils.JsonLike
+
 /**
  * Component definition - reusable UI component configuration Mirrors Flutter DUIComponentDefinition
  */

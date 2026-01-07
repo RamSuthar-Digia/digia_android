@@ -2,6 +2,7 @@ package com.digia.digiaui.framework.models
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
+import com.digia.digiaui.framework.utils.JsonLike
 
 /** Common properties shared by all widgets (padding, margin, visibility, etc.) */
 data class CommonProps(

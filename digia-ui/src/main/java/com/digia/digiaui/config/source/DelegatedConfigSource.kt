@@ -1,6 +1,6 @@
 package com.digia.digiaui.config.source
 
-import com.digia.digiaui.config.source.ConfigSource
+import com.digia.digiaui.config.ConfigException
 import com.digia.digiaui.config.model.DUIConfig
 
 /**
@@ -23,11 +23,19 @@ import com.digia.digiaui.config.model.DUIConfig
  * }
  * ```
  *
- * @param block Suspend lambda that returns DUIConfig
+ * @param getConfigFn Suspend lambda that returns DUIConfig
  */
-class DelegatedConfigSource(private val block: suspend () -> DUIConfig) : ConfigSource {
+class DelegatedConfigSource(private val getConfigFn: suspend () -> DUIConfig) : ConfigSource {
 
     override suspend fun getConfig(): DUIConfig {
-        return block()
+        try {
+            return getConfigFn()
+        } catch (e: Exception) {
+            throw ConfigException(
+                    "Failed to execute config function",
+                    originalError = e,
+                    stackTrace = e.stackTraceToString()
+            )
+        }
     }
 }

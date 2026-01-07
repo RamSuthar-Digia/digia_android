@@ -1,11 +1,9 @@
 package com.digia.digiaui.config
 
-import androidx.compose.ui.viewinterop.NoOpUpdate
 import com.digia.digiaui.config.source.AssetConfigSource
 import com.digia.digiaui.config.source.CachedConfigSource
 import com.digia.digiaui.config.source.ConfigSource
 import com.digia.digiaui.config.source.DelegatedConfigSource
-import com.digia.digiaui.config.source.FallbackConfigSource
 //import com.digia.digiaui.config.source.FallbackConfigSource
 import com.digia.digiaui.config.source.NetworkConfigSource
 import com.digia.digiaui.config.source.NetworkFileConfigSource
@@ -36,7 +34,7 @@ object ConfigStrategyFactory {
      * @param provider The ConfigProvider for loading operations
      * @return ConfigSource appropriate for the flavor
      */
-    fun createStrategy(flavor: Flavor, provider: ConfigProvider): ConfigSource {
+    fun createStrategy(flavor: Flavor, provider: ConfigFetcher): ConfigSource {
         Logger.log("Creating config strategy for flavor: ${flavor.value}")
 
         return when (flavor) {
@@ -55,20 +53,20 @@ object ConfigStrategyFactory {
 
     /** Creates a debug configuration source with optional branch name */
     private fun createDebugConfigSource(
-            provider: ConfigProvider,
-            branchName: String?
+        provider: ConfigFetcher,
+        branchName: String?
     ): ConfigSource {
         provider.addBranchName(branchName)
         return NetworkConfigSource(provider, "/config/getAppConfig")
     }
 
     /** Creates a staging configuration source */
-    private fun createStagingConfigSource(provider: ConfigProvider): ConfigSource {
+    private fun createStagingConfigSource(provider: ConfigFetcher): ConfigSource {
         return NetworkConfigSource(provider, "/config/getAppConfigStaging")
     }
 
     /** Creates a versioned configuration source */
-    private fun createVersionedSource(provider: ConfigProvider, version: Int): ConfigSource {
+    private fun createVersionedSource(provider: ConfigFetcher, version: Int): ConfigSource {
         provider.addVersionHeader(version)
         return NetworkConfigSource(provider, "/config/getAppConfigForVersion")
     }
@@ -82,10 +80,10 @@ object ConfigStrategyFactory {
      * - Local-first: Use burned assets only
      */
     private fun createReleaseFlavorConfigSource(
-            provider: ConfigProvider,
-            priority: com.digia.digiaui.init.DSLInitStrategy,
-            appConfigPath: String,
-            functionsPath: String
+        provider: ConfigFetcher,
+        priority: com.digia.digiaui.init.DSLInitStrategy,
+        appConfigPath: String,
+        functionsPath: String
     ): ConfigSource {
         return when (priority) {
             is NetworkFirstStrategy ->

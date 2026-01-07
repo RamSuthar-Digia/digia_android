@@ -1,7 +1,0 @@
-1<?xml version="1.0" encoding="utf-8"?>
-2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.digia.digiaui" > <!-- Digia UI Library Manifest -->
-4    <!-- Library doesn't need permissions or activities -->
-5    <uses-sdk android:minSdkVersion="24" />
-6
-7</manifest>

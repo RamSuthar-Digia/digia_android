@@ -1,7 +1,7 @@
 package com.digia.digiaui.config.source
 
 import com.digia.digiaui.config.ConfigException
-import com.digia.digiaui.config.ConfigProvider
+import com.digia.digiaui.config.ConfigFetcher
 import com.digia.digiaui.config.model.DUIConfig
 import com.digia.digiaui.framework.logging.Logger
 import com.google.gson.Gson
@@ -19,7 +19,7 @@ import com.google.gson.reflect.TypeToken
  * @param timeout Optional timeout for network operations
  */
 class NetworkFileConfigSource(
-    private val provider: ConfigProvider,
+    private val provider: ConfigFetcher,
     private val networkPath: String,
     private val cacheFilePath: String = "appConfig.json",
     private val timeout: Long = 3000
@@ -59,7 +59,8 @@ class NetworkFileConfigSource(
             throw ConfigException(
                     "Failed to load config from network file",
                     type = com.digia.digiaui.config.ConfigErrorType.NETWORK,
-                    originalError = e
+                    originalError = e,
+                    stackTrace = e.stackTraceToString()
             )
         }
     }

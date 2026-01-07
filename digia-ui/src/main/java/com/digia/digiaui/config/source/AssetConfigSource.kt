@@ -1,7 +1,7 @@
 package com.digia.digiaui.config.source
 
 import com.digia.digiaui.config.ConfigException
-import com.digia.digiaui.config.ConfigProvider
+import com.digia.digiaui.config.ConfigFetcher
 import com.digia.digiaui.config.model.DUIConfig
 import com.digia.digiaui.framework.logging.Logger
 import com.google.gson.Gson
@@ -22,9 +22,9 @@ import com.google.gson.reflect.TypeToken
  * @param functionsPath Path to the functions asset file (optional)
  */
 class AssetConfigSource(
-        private val provider: ConfigProvider,
-        private val appConfigPath: String = "config.json",
-        private val functionsPath: String? = "functions.json"
+    private val provider: ConfigFetcher,
+    private val appConfigPath: String = "config.json",
+    private val functionsPath: String? = "functions.json"
 ) : ConfigSource {
 
     override suspend fun getConfig(): DUIConfig {

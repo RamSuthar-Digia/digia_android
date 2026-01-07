@@ -1,7 +1,7 @@
 package com.digia.digiaui.framework.actions.base
 
 import com.digia.digiaui.framework.models.ExprOr
-import com.digia.digiaui.framework.models.JsonLike
+import com.digia.digiaui.framework.utils.JsonLike
 
 /** Action types enum - defines all available actions */
 enum class ActionType(val value: String) {
@@ -55,8 +55,8 @@ data class ActionFlow(val actions: List<Action>) {
                     }
 
             return when (actionType) {
-                ActionType.SHOW_TOAST ->
-                        com.digia.digiaui.framework.actions.showToast.ShowToastAction.fromJson(json)
+//                ActionType.SHOW_TOAST ->
+//                        com.digia.digiaui.framework.actions.showToast.ShowToastAction.fromJson(json)
                 // Other action types will be implemented later
                 else -> null
             }

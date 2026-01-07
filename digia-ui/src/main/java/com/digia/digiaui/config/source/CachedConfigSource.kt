@@ -2,7 +2,7 @@ package com.digia.digiaui.config.source
 
 import com.digia.digiaui.config.ConfigErrorType
 import com.digia.digiaui.config.ConfigException
-import com.digia.digiaui.config.ConfigProvider
+import com.digia.digiaui.config.ConfigFetcher
 import com.digia.digiaui.config.model.DUIConfig
 import com.digia.digiaui.framework.logging.Logger
 import com.google.gson.Gson
@@ -18,8 +18,8 @@ import com.google.gson.reflect.TypeToken
  * @param cachedFilePath The path to the cached config file
  */
 class CachedConfigSource(
-        private val provider: ConfigProvider,
-        private val cachedFilePath: String
+    private val provider: ConfigFetcher,
+    private val cachedFilePath: String
 ) : ConfigSource {
 
     override suspend fun getConfig(): DUIConfig {
@@ -57,7 +57,8 @@ class CachedConfigSource(
             throw ConfigException(
                     "Failed to load config from cache",
                     type = ConfigErrorType.CACHE,
-                    originalError = e
+                    originalError = e,
+                    stackTrace = e.stackTraceToString()
             )
         }
     }

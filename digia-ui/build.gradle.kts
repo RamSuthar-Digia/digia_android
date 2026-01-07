@@ -42,7 +42,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
 
 
@@ -63,6 +63,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.digiaexpr)
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.7.2")
@@ -71,6 +72,14 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+
+
+    implementation(
+        libs.quickjs.wrapper.java
+    )
+    implementation(
+        libs.quickjs.wrapper.android
+    )
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")

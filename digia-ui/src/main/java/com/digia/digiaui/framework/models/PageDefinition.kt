@@ -1,6 +1,7 @@
 package com.digia.digiaui.framework.models
 
 import com.digia.digiaui.framework.actions.base.ActionFlow
+import com.digia.digiaui.framework.utils.JsonLike
 
 /** Page definition - complete configuration for a page Mirrors Flutter DUIPageDefinition */
 data class PageDefinition(

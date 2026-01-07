@@ -1,248 +1,491 @@
-//package com.digia.digiaui.framework
-//
-//import androidx.compose.runtime.Composable
-//import com.digia.digiaui.config.ConfigProvider
-//import com.digia.digiaui.config.model.DUIConfig
-//import com.digia.digiaui.framework.logging.Logger
-//import com.digia.digiaui.framework.page.DUIPage
-//import com.digia.digiaui.framework.widgets.registerBuiltInWidgets
-//import com.digia.digiaui.init.DigiaUIManager
-//
-///**
-// * Central factory class for creating Digia UI widgets, pages, and components.
-// *
-// * [DUIFactory] is a singleton that serves as the main entry point for creating UI elements from
-// * JSON configurations. It manages UI resources, widget registries, and provides methods for
-// * creating various UI elements with optional customization.
-// *
-// * This follows the Flutter DUIFactory pattern, acting as the central point for:
-// * - Creating pages and components from JSON definitions
-// * - Managing UI resources (icons, images, fonts, colors)
-// * - Handling widget registration for custom components
-// * - Providing resource override capabilities
-// * - Managing navigation routes and bottom sheets
-// *
-// * Example usage:
-// * ```kotlin
-// * // Initialize factory
-// * DUIFactory.getInstance().initialize(config = appConfig)
-// *
-// * // Create a page
-// * DUIFactory.getInstance().createPage("pageId")
-// *
-// * // Register custom widget
-// * DUIFactory.getInstance().registerWidget("custom/myWidget") { data, parent ->
-// *     MyCustomWidget(data)
-// * }
-// * ```
-// */
-//class DUIFactory private constructor() {
-//
-//    private lateinit var configProvider: ConfigProvider
-//    private lateinit var widgetRegistry: DefaultVirtualWidgetRegistry
-//    private var resources: UIResources = UIResources()
-//    private val environmentVariables = mutableMapOf<String, Any?>()
-//    private var isInitialized = false
-//
-//    /**
-//     * Initializes the singleton factory with all necessary configuration and resources.
-//     *
-//     * This method must be called before using any other factory methods. It sets up the widget
-//     * registry, configuration provider, and UI resources based on the initialized DigiaUI instance
-//     * and optional custom resources.
-//     *
-//     * @param config The application configuration containing pages, components, and resources
-//     * @param customIcons Custom icon mappings to override or extend default icons
-//     * @param customImages Custom image provider mappings for app-specific images
-//     *
-//     * @throws IllegalStateException if DigiaUIManager is not properly initialized
-//     */
-//    fun initialize(
-//            config: DUIConfig,
-//            customIcons: Map<String, Any>? = null,
-//            customImages: Map<String, Any>? = null
-//    ) {
-//        if (isInitialized) {
-//            Logger.log("DUIFactory already initialized, reinitializing...")
-//            destroy()
-//        }
-//
-//        // Ensure DigiaUIManager is properly initialized
-//        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
-//        if (digiaUIInstance == null) {
-//            throw IllegalStateException(
-//                    "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
-//                            "and DigiaUIManager.initialize() before calling DUIFactory.initialize()."
-//            )
-//        }
-//
-//        // Initialize configuration provider with both config and networkClient
-//        configProvider = DUIConfigProvider(
-//            config,
-//            digiaUIInstance.networkClient,
-//            digiaUIInstance.initConfig.context
-//        )
-//
-//        // Create UI resources from config
-//        resources =
-//                UIResources(
-//                        colors = config.colorTokens,
-//                        darkColors = config.darkColorTokens,
-//                        fonts = config.fontTokens,
-//                        customIcons = customIcons,
-//                        customImages = customImages
-//                )
-//
-//        // Initialize widget registry with component builder
-//        widgetRegistry =
-//                DefaultVirtualWidgetRegistry(
-//                        componentBuilder = { id, args ->
-//                            // Component rendering placeholder
-//                            // TODO: Implement component rendering
-//                        }
-//                )
-//
-//        // Register all built-in widgets
-//        widgetRegistry.registerBuiltInWidgets()
-//
-//        isInitialized = true
-//        Logger.log("DUIFactory initialized successfully")
-//    }
-//
-//    /**
-//     * Creates a page by ID with optional arguments.
-//     *
-//     * @param pageId The unique identifier of the page to create
-//     * @param pageArgs Optional arguments to pass to the page
-//     * @return Composable page content
-//     * @throws IllegalArgumentException if page is not found
-//     * @throws IllegalStateException if factory is not initialized
-//     */
-//    @Composable
-//    fun CreatePage(pageId: String, pageArgs: Map<String, Any?>? = null) {
-//        checkInitialized()
-//
-//        val pageDef =
-//                configProvider.getPageDefinition(pageId)
-//                        ?: throw IllegalArgumentException("Page not found: $pageId")
-//
-//        ResourceProvider(resources) {
-//            DUIPage(
-//                    pageId = pageId,
-//                    pageArgs = pageArgs,
-//                    pageDef = pageDef,
-//                    registry = widgetRegistry
-//            )
-//        }
-//    }
-//
-//    /**
-//     * Creates the initial page from configuration.
-//     *
-//     * Uses the initialRoute defined in the configuration to determine which page to display first.
-//     *
-//     * @return Composable initial page content
-//     * @throws IllegalStateException if factory is not initialized or no pages exist
-//     */
-//    @Composable
-//    fun CreateInitialPage() {
-//        checkInitialized()
-//
-//        // Get initial route from config
-//        val initialRoute = configProvider.getInitialRoute()
-//        CreatePage(initialRoute)
-//    }
-//
-//    /**
-//     * Registers a custom widget builder.
-//     *
-//     * @param type The widget type identifier (e.g., "custom/myWidget")
-//     * @param builder The builder function that creates the widget
-//     */
-//    fun registerWidget(type: String, builder: VirtualWidgetBuilder) {
-//        checkInitialized()
-//        widgetRegistry.registerWidget(type, builder)
-//        Logger.log("Registered custom widget: $type")
-//    }
-//
-//    /**
-//     * Sets an environment variable that can be accessed in expressions.
-//     *
-//     * @param key The variable name
-//     * @param value The variable value
-//     */
-//    fun setEnvironmentVariable(key: String, value: Any?) {
-//        environmentVariables[key] = value
-//    }
-//
-//    /**
-//     * Sets multiple environment variables at once.
-//     *
-//     * @param variables Map of variable names to values
-//     */
-//    fun setEnvironmentVariables(variables: Map<String, Any?>) {
-//        environmentVariables.putAll(variables)
-//    }
-//
-//    /**
-//     * Gets an environment variable value.
-//     *
-//     * @param key The variable name
-//     * @return The variable value or null if not found
-//     */
-//    fun getEnvironmentVariable(key: String): Any? {
-//        return environmentVariables[key]
-//    }
-//
-//    /**
-//     * Gets all environment variables.
-//     *
-//     * @return Map of all environment variables
-//     */
-//    fun getAllEnvironmentVariables(): Map<String, Any?> {
-//        return environmentVariables.toMap()
-//    }
-//
-//    /** Clears all environment variables. */
-//    fun clearEnvironmentVariables() {
-//        environmentVariables.clear()
-//    }
-//
-//    /** Destroys the factory and cleans up resources. */
-//    fun destroy() {
-//        environmentVariables.clear()
-//        isInitialized = false
-//        Logger.log("DUIFactory destroyed")
-//    }
-//
-//    private fun checkInitialized() {
-//        if (!isInitialized) {
-//            throw IllegalStateException(
-//                    "DUIFactory is not initialized. Call DUIFactory.getInstance().initialize() first."
-//            )
-//        }
-//    }
-//
-//    companion object {
-//        @Volatile private var instance: DUIFactory? = null
-//
-//        /**
-//         * Gets the singleton instance of DUIFactory.
-//         *
-//         * @return The DUIFactory singleton instance
-//         */
-//        fun getInstance(): DUIFactory {
-//            return instance
-//                    ?: synchronized(this) { instance ?: DUIFactory().also { instance = it } }
-//        }
-//    }
-//}
-//
-///** UI Resources container holding colors, fonts, icons, and images. */
-//data class UIResources(
-//        val colors: Map<String, Any> = emptyMap(),
-//        val darkColors: Map<String, Any> = emptyMap(),
-//        val fonts: Map<String, Any> = emptyMap(),
-//        val customIcons: Map<String, Any>? = null,
-//        val customImages: Map<String, Any>? = null
-//)
+package com.digia.digiaui.framework
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
+import com.digia.digiaui.config.model.DUIConfig
+import com.digia.digiaui.framework.logging.Logger
+import com.digia.digiaui.framework.models.ComponentDefinition
+import com.digia.digiaui.framework.models.PageDefinition
+import com.digia.digiaui.framework.page.ConfigProvider
+import com.digia.digiaui.framework.page.DUIConfigProvider
+import com.digia.digiaui.framework.widgets.registerBuiltInWidgets
+import com.digia.digiaui.init.DigiaUIManager
+
+/**
+ * Central factory class for creating Digia UI widgets, pages, and components.
+ *
+ * [DUIFactory] is a singleton that serves as the main entry point for creating UI elements from
+ * JSON configurations. It manages UI resources, widget registries, and provides methods for
+ * creating various UI elements with optional customization.
+ *
+ * This follows the Flutter DUIFactory pattern, acting as the central point for:
+ * - Creating pages and components from JSON definitions
+ * - Managing UI resources (icons, images, fonts, colors)
+ * - Handling widget registration for custom components
+ * - Providing resource override capabilities
+ * - Managing navigation routes and bottom sheets
+ *
+ * Example usage:
+ * ```kotlin
+ * // Initialize factory
+ * DUIFactory.getInstance().initialize(config = appConfig)
+ *
+ * // Create a page
+ * DUIFactory.getInstance().CreatePage("pageId")
+ *
+ * // Register custom widget
+ * DUIFactory.getInstance().registerWidget("custom/myWidget") { data, parent ->
+ *     MyCustomWidget(data)
+ * }
+ * ```
+ */
+class DUIFactory private constructor() {
+
+    private lateinit var configProvider: ConfigProvider
+    private lateinit var widgetRegistry: DefaultVirtualWidgetRegistry
+    private var resources: UIResources = UIResources()
+    private var isInitialized = false
+
+    /**
+     * Initializes the singleton factory with all necessary configuration and resources.
+     *
+     * This method must be called before using any other factory methods. It sets up the widget
+     * registry, configuration provider, and UI resources based on the initialized DigiaUI
+     * instance and optional custom resources.
+     *
+     * @param config The application configuration containing pages, components, and resources
+     * @param pageConfigFetcher Custom page configuration provider, defaults to built-in provider if not specified
+     * @param icons Custom icon mappings to override or extend default icons
+     * @param images Custom image provider mappings for app-specific images
+     * @param textStyles Custom text styles for typography
+     * @param colors Custom color tokens for light theme
+     * @param darkColors Custom color tokens for dark theme
+     * @param fontFactory Custom font factory for creating text styles with specific fonts
+     *
+     * @throws IllegalStateException if DigiaUIManager is not properly initialized
+     *
+     * Note: Environment variables should be set using the DUIConfig or DigiaUIManager directly
+     */
+    fun initialize(
+        config: DUIConfig,
+        pageConfigFetcher: ConfigProvider? = null,
+        icons: Map<String, ImageVector>? = null,
+        images: Map<String, ImageBitmap>? = null,
+        textStyles: Map<String, TextStyle>? = null,
+        colors: Map<String, Color>? = null,
+        darkColors: Map<String, Color>? = null,
+        fontFactory: DUIFontFactory? = null
+    ) {
+        if (isInitialized) {
+            Logger.log("DUIFactory already initialized, reinitializing...")
+            destroy()
+        }
+
+        // Ensure DigiaUIManager is properly initialized
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and DigiaUIManager.initialize() before calling DUIFactory.initialize()."
+            )
+        }
+
+        // Initialize configuration provider with custom provider or default
+        configProvider = pageConfigFetcher ?: DUIConfigProvider(config)
+
+        // Create UI resources from config and custom overrides
+        resources = UIResources(
+            icons = icons,
+            images = images,
+            textStyles = textStyles,
+            colors = colors,
+            darkColors = darkColors,
+            fontFactory = fontFactory
+        )
+
+        // Initialize widget registry with component builder
+        widgetRegistry = DefaultVirtualWidgetRegistry(
+            componentBuilder = { id, args ->
+                CreateComponent(id, args)
+            }
+        )
+
+        // Register all built-in widgets
+        widgetRegistry.registerBuiltInWidgets()
+
+        isInitialized = true
+        Logger.log("DUIFactory initialized successfully")
+    }
+    /**
+     * Creates a page by ID with optional arguments and resource overrides.
+     *
+     * Pages are full-screen UI definitions that typically represent app screens with their own
+     * lifecycle, state management, and navigation capabilities.
+     *
+     * @param pageId The unique identifier of the page to create
+     * @param pageArgs Optional arguments to pass to the page (accessible via expressions)
+     * @param overrideIcons Custom icons to override defaults for this page
+     * @param overrideImages Custom images to override defaults for this page
+     * @param overrideTextStyles Custom text styles to override defaults for this page
+     * @param overrideColors Custom colors to override defaults for this page (light theme)
+     * @param overrideDarkColors Custom colors to override defaults for this page (dark theme)
+     *
+     * @throws IllegalArgumentException if page is not found
+     * @throws IllegalStateException if factory is not initialized
+     */
+    @Composable
+    fun CreatePage(
+        pageId: String,
+        pageArgs: Map<String, Any?>? = null,
+        overrideIcons: Map<String, ImageVector>? = null,
+        overrideImages: Map<String, ImageBitmap>? = null,
+        overrideTextStyles: Map<String, TextStyle>? = null,
+        overrideColors: Map<String, Color>? = null,
+        overrideDarkColors: Map<String, Color>? = null
+    ) {
+        checkInitialized()
+
+        // getPageDefinition throws IllegalArgumentException if not found
+        val pageDef = configProvider.getPageDefinition(pageId)
+
+        // Merge overriding resources with existing resources
+        val mergedResources = UIResources(
+            icons = mergeMap(resources.icons, overrideIcons),
+            images = mergeMap(resources.images, overrideImages),
+            textStyles = mergeMap(resources.textStyles, overrideTextStyles),
+            colors = mergeMap(resources.colors, overrideColors),
+            darkColors = mergeMap(resources.darkColors, overrideDarkColors),
+            fontFactory = resources.fontFactory
+        )
+
+        ResourceProvider(mergedResources) {
+            DUIPage(
+                pageId = pageId,
+                pageArgs = pageArgs,
+                pageDef = pageDef,
+                registry = widgetRegistry,
+                resources = mergedResources
+            )
+        }
+    }
+
+    @Composable
+    @Suppress("UNUSED_PARAMETER")
+    private fun DUIPage(
+        pageId: String,
+        pageArgs: Map<String, Any?>?,
+        pageDef: PageDefinition,
+        registry: DefaultVirtualWidgetRegistry,
+        resources: UIResources
+    ) {
+        // TODO: Implement full DUIPage rendering
+        // This is a placeholder that should be replaced with the actual implementation
+        // including state management, lifecycle, and action execution
+        Logger.log("Rendering page: $pageId")
+    }
+
+    /**
+     * Creates the initial page from configuration.
+     *
+     * Uses the initialRoute defined in the configuration to determine which page to display first.
+     *
+     * @param overrideIcons Custom icons to override defaults
+     * @param overrideImages Custom images to override defaults
+     * @param overrideTextStyles Custom text styles to override defaults
+     * @param overrideColors Custom colors to override defaults
+     * @param overrideDarkColors Custom dark colors to override defaults
+     *
+     * @throws IllegalStateException if factory is not initialized or no pages exist
+     */
+    @Composable
+    fun CreateInitialPage(
+        overrideIcons: Map<String, ImageVector>? = null,
+        overrideImages: Map<String, ImageBitmap>? = null,
+        overrideTextStyles: Map<String, TextStyle>? = null,
+        overrideColors: Map<String, Color>? = null,
+        overrideDarkColors: Map<String, Color>? = null
+    ) {
+        checkInitialized()
+
+        // Get initial route from config
+        val initialRoute = configProvider.getInitialRoute()
+        CreatePage(
+            pageId = initialRoute,
+            overrideIcons = overrideIcons,
+            overrideImages = overrideImages,
+            overrideTextStyles = overrideTextStyles,
+            overrideColors = overrideColors,
+            overrideDarkColors = overrideDarkColors
+        )
+    }
+
+    /**
+     * Creates a reusable component widget from a JSON configuration.
+     *
+     * Components are smaller, reusable UI blocks that can be embedded within pages or other
+     * components. They have their own state management and can receive arguments for customization.
+     *
+     * @param componentId Unique identifier for the component configuration
+     * @param args Arguments to pass to the component (accessible via expressions)
+     * @param overrideIcons Custom icons to override defaults for this component
+     * @param overrideImages Custom images to override defaults for this component
+     * @param overrideTextStyles Custom text styles to override defaults for this component
+     * @param overrideColors Custom colors to override defaults for this component
+     * @param overrideDarkColors Custom dark colors to override defaults for this component
+     *
+     * @throws IllegalArgumentException if component is not found
+     * @throws IllegalStateException if factory is not initialized
+     */
+    @Composable
+    fun CreateComponent(
+        componentId: String,
+        args: Map<String, Any?>? = null,
+        overrideIcons: Map<String, ImageVector>? = null,
+        overrideImages: Map<String, ImageBitmap>? = null,
+        overrideTextStyles: Map<String, TextStyle>? = null,
+        overrideColors: Map<String, Color>? = null,
+        overrideDarkColors: Map<String, Color>? = null
+    ) {
+        checkInitialized()
+
+        // getComponentDefinition throws IllegalArgumentException if not found
+        val componentDef = configProvider.getComponentDefinition(componentId)
+
+        // Merge overriding resources with existing resources
+        val mergedResources = UIResources(
+            icons = mergeMap(resources.icons, overrideIcons),
+            images = mergeMap(resources.images, overrideImages),
+            textStyles = mergeMap(resources.textStyles, overrideTextStyles),
+            colors = mergeMap(resources.colors, overrideColors),
+            darkColors = mergeMap(resources.darkColors, overrideDarkColors),
+            fontFactory = resources.fontFactory
+        )
+
+        ResourceProvider(mergedResources) {
+            DUIComponent(
+                componentId = componentId,
+                args = args,
+                componentDef = componentDef,
+                registry = widgetRegistry,
+                resources = mergedResources
+            )
+        }
+    }
+
+    @Composable
+    @Suppress("UNUSED_PARAMETER")
+    private fun DUIComponent(
+        componentId: String,
+        args: Map<String, Any?>?,
+        componentDef: ComponentDefinition,
+        registry: DefaultVirtualWidgetRegistry,
+        resources: UIResources
+    ) {
+        // TODO: Implement full DUIComponent rendering
+        // This is a placeholder that should be replaced with the actual implementation
+        // including state management and action execution
+        Logger.log("Rendering component: $componentId")
+    }
+
+    /**
+     * Registers a custom widget builder.
+     *
+     * This method allows you to extend Digia UI with custom widgets that can be used in JSON
+     * configurations. The widget will be identified by the provided [type] string.
+     *
+     * @param type The widget type identifier (e.g., "custom/myWidget")
+     * @param builder The builder function that creates the widget
+     *
+     * @throws IllegalStateException if factory is not initialized
+     *
+     * Example:
+     * ```kotlin
+     * DUIFactory.getInstance().registerWidget("custom/map") { data, registry ->
+     *     VWCustomMap(data, registry)
+     * }
+     * ```
+     */
+    fun registerWidget(type: String, builder: VirtualWidgetBuilder) {
+        checkInitialized()
+        widgetRegistry.registerWidget(type, builder)
+        Logger.log("Registered custom widget: $type")
+    }
+
+    /**
+     * Sets an environment variable that can be accessed in expressions.
+     *
+     * This method allows updating environment variables at runtime through the DUIConfig.
+     *
+     * @param key The variable name
+     * @param value The variable value
+     *
+     * @throws IllegalStateException if DigiaUIManager is not initialized
+     */
+    fun setEnvironmentVariable(key: String, value: Any?) {
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and await its completion before calling setEnvironmentVariable()."
+            )
+        }
+        // Delegate to DUIConfig
+        digiaUIInstance.dslConfig.setEnvVariable(key, value)
+        Logger.log("Set environment variable: $key")
+    }
+
+    /**
+     * Sets multiple environment variables at once.
+     *
+     * This method allows updating multiple environment variables simultaneously, which is more
+     * efficient than calling setEnvironmentVariable multiple times.
+     *
+     * @param variables Map of variable names to values
+     *
+     * @throws IllegalStateException if DigiaUIManager is not initialized
+     */
+    fun setEnvironmentVariables(variables: Map<String, Any?>) {
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and await its completion before calling setEnvironmentVariables()."
+            )
+        }
+        // Delegate to DUIConfig for each variable
+        for ((key, value) in variables) {
+            digiaUIInstance.dslConfig.setEnvVariable(key, value)
+        }
+        Logger.log("Set ${variables.size} environment variables")
+    }
+
+    /**
+     * Gets an environment variable value.
+     *
+     * @param key The variable name
+     * @return The variable value or null if not found
+     *
+     * @throws IllegalStateException if DigiaUIManager is not initialized
+     */
+    fun getEnvironmentVariable(key: String): Any? {
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and await its completion before calling getEnvironmentVariable()."
+            )
+        }
+        return digiaUIInstance.dslConfig.getEnvVariable(key)
+    }
+
+    /**
+     * Gets all environment variables.
+     *
+     * @return Map of all environment variables
+     *
+     * @throws IllegalStateException if DigiaUIManager is not initialized
+     */
+    fun getAllEnvironmentVariables(): Map<String, Any?> {
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and await its completion before calling getAllEnvironmentVariables()."
+            )
+        }
+        return digiaUIInstance.dslConfig.getAllEnvVariables()
+    }
+
+    /**
+     * Clears a single environment variable value at runtime.
+     *
+     * This method resets an environment variable to null.
+     *
+     * @param key The variable name
+     *
+     * @throws IllegalStateException if DigiaUIManager is not initialized
+     */
+    fun clearEnvironmentVariable(key: String) {
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and await its completion before calling clearEnvironmentVariable()."
+            )
+        }
+        digiaUIInstance.dslConfig.setEnvVariable(key, null)
+        Logger.log("Cleared environment variable: $key")
+    }
+
+    /**
+     * Clears multiple environment variables at once.
+     *
+     * @param keys List of variable names to clear
+     *
+     * @throws IllegalStateException if DigiaUIManager is not initialized
+     */
+    fun clearEnvironmentVariables(keys: List<String>) {
+        val digiaUIInstance = DigiaUIManager.getInstance().safeInstance
+        if (digiaUIInstance == null) {
+            throw IllegalStateException(
+                "DigiaUIManager is not initialized. Make sure to call DigiaUI.initialize() " +
+                        "and await its completion before calling clearEnvironmentVariables()."
+            )
+        }
+        for (key in keys) {
+            digiaUIInstance.dslConfig.setEnvVariable(key, null)
+        }
+        Logger.log("Cleared ${keys.size} environment variables")
+    }
+
+    /**
+     * Destroys the factory and cleans up resources.
+     *
+     * This method should be called when the factory is no longer needed, typically during app
+     * shutdown. It disposes of the widget registry to free up resources.
+     */
+    fun destroy() {
+        if (isInitialized) {
+            // Clean up registry if needed
+            isInitialized = false
+            Logger.log("DUIFactory destroyed")
+        }
+    }
+
+    /**
+     * Helper method to merge two maps, with the override map taking precedence.
+     */
+    private fun <K, V> mergeMap(base: Map<K, V>?, override: Map<K, V>?): Map<K, V>? {
+        return when {
+            base == null && override == null -> null
+            base == null -> override
+            override == null -> base
+            else -> base + override
+        }
+    }
+
+    private fun checkInitialized() {
+        if (!isInitialized) {
+            throw IllegalStateException(
+                    "DUIFactory is not initialized. Call DUIFactory.getInstance().initialize() first."
+            )
+        }
+    }
+
+    companion object {
+        @Volatile private var instance: DUIFactory? = null
+
+        /**
+         * Gets the singleton instance of DUIFactory.
+         *
+         * @return The DUIFactory singleton instance
+         */
+        fun getInstance(): DUIFactory {
+            return instance
+                    ?: synchronized(this) { instance ?: DUIFactory().also { instance = it } }
+        }
+    }
+}

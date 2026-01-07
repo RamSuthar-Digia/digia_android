@@ -2,7 +2,7 @@ package com.digia.digiaui.config.source
 
 import com.digia.digiaui.config.ConfigErrorType
 import com.digia.digiaui.config.ConfigException
-import com.digia.digiaui.config.ConfigProvider
+import com.digia.digiaui.config.ConfigFetcher
 import com.digia.digiaui.config.model.DUIConfig
 import com.digia.digiaui.framework.logging.Logger
 import kotlin.time.Duration
@@ -18,9 +18,9 @@ import kotlin.time.Duration
  * @param timeout Optional timeout for the network request
  */
 class NetworkConfigSource(
-        private val provider: ConfigProvider,
-        private val networkPath: String,
-        private val timeout: Duration? = null
+    private val provider: ConfigFetcher,
+    private val networkPath: String,
+    private val timeout: Duration? = null
 ) : ConfigSource {
 
     override suspend fun getConfig(): DUIConfig {
@@ -55,7 +55,8 @@ class NetworkConfigSource(
             throw ConfigException(
                     "Failed to load config from network",
                     type = ConfigErrorType.NETWORK,
-                    originalError = e
+                    originalError = e,
+                    stackTrace = e.stackTraceToString()
             )
         }
     }

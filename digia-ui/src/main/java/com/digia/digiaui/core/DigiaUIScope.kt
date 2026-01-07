@@ -6,12 +6,6 @@ import androidx.compose.runtime.compositionLocalOf
 import com.digia.digiaui.analytics.DUIAnalytics
 import com.digia.digiaui.framework.message.MessageBus
 
-/**
- * CompositionLocal for providing DigiaUIViewModel down the tree (similar to InheritedWidget in
- * Flutter)
- */
-val LocalDigiaUIViewModel = compositionLocalOf<DigiaUIViewModel?> { null }
-
 /** CompositionLocal for providing MessageBus down the tree */
 val LocalMessageBus = compositionLocalOf<MessageBus?> { null }
 
@@ -25,36 +19,21 @@ val LocalAnalytics = compositionLocalOf<DUIAnalytics?> { null }
  * The [DigiaUIScope] manages a [MessageBus] instance that enables communication between different
  * parts of the application. Similar to Flutter's InheritedWidget pattern.
  *
- * @param viewModel The DigiaUIViewModel instance
  * @param messageBus The message bus instance used for communication within the SDK
  * @param analytics Optional analytics handler for tracking user interactions
  * @param content The child composable content
  */
 @Composable
 fun DigiaUIScope(
-        viewModel: DigiaUIViewModel,
         messageBus: MessageBus = MessageBus(),
         analytics: DUIAnalytics? = null,
         content: @Composable () -> Unit
 ) {
     CompositionLocalProvider(
-            LocalDigiaUIViewModel provides viewModel,
             LocalMessageBus provides messageBus,
             LocalAnalytics provides analytics,
             content = content
     )
-}
-
-/**
- * Extension function to get DigiaUIViewModel from current composition Throws if not found in the
- * composition tree
- */
-@Composable
-fun requireDigiaUIViewModel(): DigiaUIViewModel {
-    return LocalDigiaUIViewModel.current
-            ?: throw IllegalStateException(
-                    "No DigiaUIViewModel found in composition. Wrap your content with DigiaUIScope."
-            )
 }
 
 /**

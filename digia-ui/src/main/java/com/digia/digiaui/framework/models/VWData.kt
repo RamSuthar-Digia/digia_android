@@ -1,4 +1,17 @@
 package com.digia.digiaui.framework.models
+import com.digia.digiaui.framework.utils.JsonLike
+
+enum class NodeType {
+    widget,
+    state,
+    component;
+
+    companion object {
+        fun fromString(value: String): NodeType? {
+            return values().firstOrNull { it.name == value }
+        }
+    }
+}
 
 /**
  * Virtual Widget Data - sealed class representing different types of widget nodes Mirrors the
@@ -9,13 +22,12 @@ sealed class VWData {
 
     companion object {
         fun fromJson(json: JsonLike): VWData {
-            val nodeType = json["nodeType"] as? String ?: json["category"] as? String ?: "widget"
+            val nodeType = NodeType.fromString(json["nodeType"] as? String ?: json["category"] as? String ?: "widget") ?: NodeType.widget
 
             return when (nodeType) {
-                "widget" -> VWNodeData.fromJson(json)
-                "component" -> VWComponentData.fromJson(json)
-                "state" -> VWStateData.fromJson(json)
-                else -> VWNodeData.fromJson(json)
+                NodeType.widget -> VWNodeData.fromJson(json)
+                NodeType.component -> VWComponentData.fromJson(json)
+                NodeType.state -> VWStateData.fromJson(json)
             }
         }
     }
@@ -23,12 +35,12 @@ sealed class VWData {
 
 /** Regular widget node (Text, Button, Container, etc.) */
 data class VWNodeData(
-        override val refName: String? = null,
-        val type: String, // Widget type (e.g., "digia/text")
-        val props: JsonLike = emptyMap(), // Widget-specific properties
-        val commonProps: CommonProps? = null, // Common properties
-        val parentProps: JsonLike? = null, // Props for parent container
-        val childGroups: Map<String, List<VWData>>? = null // Child widgets
+    override val refName: String? = null,
+    val type: String, // Widget type (e.g., "digia/text")
+    val props: Map<String, Any?> = emptyMap(), // Widget-specific properties
+    val commonProps: CommonProps? = null, // Common properties
+    val parentProps: JsonLike? = null, // Props for parent container
+    val childGroups: Map<String, List<VWData>>? = null // Child widgets
 ) : VWData() {
     companion object {
         fun fromJson(json: JsonLike): VWNodeData {
@@ -111,7 +123,7 @@ data class VWStateData(
 /** Variable definition for state and arguments */
 data class Variable(val name: String, val type: String, val defaultValue: Any? = null) {
     companion object {
-        fun fromJson(json: JsonLike): Variable {
+        fun fromJson(json: Map<String, Any?>): Variable {
             return Variable(
                     name = json["name"] as? String ?: "",
                     type = json["type"] as? String ?: "any",
