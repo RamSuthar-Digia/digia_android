@@ -145,6 +145,7 @@ class VWFlex(
         val spacing = (props.spacing ?: 0.0).dp
         val startSpacing = (props.startSpacing ?: 0.0).dp
         val endSpacing = (props.endSpacing ?: 0.0).dp
+        val mainAxisSize = props.mainAxisSize ?: "min"
 
         val mainAxisAlignment = when (props.direction) {
             FlexDirection.VERTICAL -> toMainAxisAlignmentVertical(props.mainAxisAlignment)

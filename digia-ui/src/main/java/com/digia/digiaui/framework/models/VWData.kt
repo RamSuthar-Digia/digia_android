@@ -50,7 +50,9 @@ data class VWNodeData(
                     refName = tryKeys<String>(json, listOf("varName", "refName")),
                     type = json["type"] as? String ?: "",
                     props  = (json["props"] as? JsonLike)?.let(::Props) ?: Props.empty(),
-                    commonProps = CommonProps.fromJson(json["commonProps"] as? JsonLike),
+                    commonProps  = (json["containerProps"] as? JsonLike)?.let {
+                        CommonProps.fromJson(it)
+                    },
                     parentProps  = (json["parentProps"] as? JsonLike)?.let(::Props) ?: Props.empty(),
                 childGroups = tryKeys(json, listOf("childGroups", "children"), VWNodeData::parseChildGroups),
             )

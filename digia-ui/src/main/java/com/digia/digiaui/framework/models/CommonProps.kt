@@ -58,8 +58,8 @@ data class CommonProps(
                 ) { value ->
                     asType<JsonLike>(value)?.let(CommonStyle::fromJson)
                 },
-                onClick = ActionFlow.fromJson(json["onClick"] as  JsonLike)
-
+                onClick = (json["onClick"] as? JsonLike)?.let(ActionFlow::fromJson
+                )
             )
         }
     }
