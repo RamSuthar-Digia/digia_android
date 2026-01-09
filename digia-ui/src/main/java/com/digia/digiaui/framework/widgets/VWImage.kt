@@ -22,20 +22,20 @@ import com.digia.digiaui.framework.utils.JsonLike
 
 /** Image widget properties */
 data class ImageProps(
-    val src: ExprOr<String>?,
-    val fit: ExprOr<String>? = null,
-    val alignment: ExprOr<String>? = null,
-    val placeholder: ExprOr<String>? = null,
-    val isLottie: ExprOr<Boolean>? = null
+        val src: ExprOr<String>?,
+        val fit: ExprOr<String>? = null,
+        val alignment: ExprOr<String>? = null,
+        val placeholder: ExprOr<String>? = null,
+        val isLottie: ExprOr<Boolean>? = null
 ) {
     companion object {
         fun fromJson(json: JsonLike): ImageProps {
             return ImageProps(
-                src = ExprOr.fromValue(json["src"]),
-                fit = ExprOr.fromValue(json["fit"]),
-                alignment = ExprOr.fromValue(json["alignment"]),
-                placeholder = ExprOr.fromValue(json["placeholder"]),
-                isLottie = ExprOr.fromValue(json["isLottie"])
+                    src = ExprOr.fromValue(json["src"]),
+                    fit = ExprOr.fromValue(json["fit"]),
+                    alignment = ExprOr.fromValue(json["alignment"]),
+                    placeholder = ExprOr.fromValue(json["placeholder"]),
+                    isLottie = ExprOr.fromValue(json["isLottie"])
             )
         }
     }
@@ -43,18 +43,19 @@ data class ImageProps(
 
 /** Virtual Image widget handling Network, SVG, and Lottie */
 class VWImage(
-    refName: String?,
-    commonProps: CommonProps?,
-    parent: VirtualNode?,
-    parentProps: Props? = null,
-    props: ImageProps
-) : VirtualLeafNode<ImageProps>(
-    props = props,
-    commonProps = commonProps,
-    parent = parent,
-    refName = refName,
-    parentProps = parentProps
-) {
+        refName: String?,
+        commonProps: CommonProps?,
+        parent: VirtualNode?,
+        parentProps: Props? = null,
+        props: ImageProps
+) :
+        VirtualLeafNode<ImageProps>(
+                props = props,
+                commonProps = commonProps,
+                parent = parent,
+                refName = refName,
+                parentProps = parentProps
+        ) {
 
     @Composable
     override fun Render(payload: RenderPayload) {
@@ -64,27 +65,29 @@ class VWImage(
         val placeholder = payload.evalExpr(props.placeholder)
         val isLottie = payload.evalExpr(props.isLottie) ?: src.endsWith(".json")
 
-        val contentScale = when (fitStr) {
-            "contain" -> ContentScale.Fit
-            "cover" -> ContentScale.Crop
-            "fillBounds" -> ContentScale.FillBounds
-            "fitWidth" -> ContentScale.FillWidth
-            "fitHeight" -> ContentScale.FillHeight
-            "none" -> ContentScale.None
-            else -> ContentScale.Fit
-        }
+        val contentScale =
+                when (fitStr) {
+                    "contain" -> ContentScale.Fit
+                    "cover" -> ContentScale.Crop
+                    "fillBounds" -> ContentScale.FillBounds
+                    "fitWidth" -> ContentScale.FillWidth
+                    "fitHeight" -> ContentScale.FillHeight
+                    "none" -> ContentScale.None
+                    else -> ContentScale.Fit
+                }
 
-        val alignment = when (alignmentStr) {
-            "topCenter" -> Alignment.TopCenter
-            "bottomCenter" -> Alignment.BottomCenter
-            "centerLeft", "centerStart" -> Alignment.CenterStart
-            "centerRight", "centerEnd" -> Alignment.CenterEnd
-            "topLeft", "topStart" -> Alignment.TopStart
-            "topRight", "topEnd" -> Alignment.TopEnd
-            "bottomLeft", "bottomStart" -> Alignment.BottomStart
-            "bottomRight", "bottomEnd" -> Alignment.BottomEnd
-            else -> Alignment.Center
-        }
+        val alignment =
+                when (alignmentStr) {
+                    "topCenter" -> Alignment.TopCenter
+                    "bottomCenter" -> Alignment.BottomCenter
+                    "centerLeft", "centerStart" -> Alignment.CenterStart
+                    "centerRight", "centerEnd" -> Alignment.CenterEnd
+                    "topLeft", "topStart" -> Alignment.TopStart
+                    "topRight", "topEnd" -> Alignment.TopEnd
+                    "bottomLeft", "bottomStart" -> Alignment.BottomStart
+                    "bottomRight", "bottomEnd" -> Alignment.BottomEnd
+                    else -> Alignment.Center
+                }
 
         val modifier = Modifier.buildModifier(payload)
 
@@ -97,55 +100,61 @@ class VWImage(
 
     @Composable
     private fun RenderLottie(
-        path: String,
-        modifier: Modifier,
-        contentScale: ContentScale,
-        alignment: Alignment
+            path: String,
+            modifier: Modifier,
+            contentScale: ContentScale,
+            alignment: Alignment
     ) {
         val composition by rememberLottieComposition(LottieCompositionSpec.Url(path))
-        val progress by animateLottieCompositionAsState(
-            composition,
-            iterations = LottieConstants.IterateForever
-        )
+        val progress by
+                animateLottieCompositionAsState(
+                        composition,
+                        iterations = LottieConstants.IterateForever
+                )
         LottieAnimation(
-            composition = composition,
-            progress = { progress },
-            modifier = modifier,
-            contentScale = contentScale,
-            alignment = alignment
+                composition = composition,
+                progress = { progress },
+                modifier = modifier,
+                contentScale = contentScale,
+                alignment = alignment
         )
     }
 
     @Composable
     private fun RenderAsyncImage(
-        url: String,
-        placeholder: String?,
-        modifier: Modifier,
-        contentScale: ContentScale,
-        alignment: Alignment
+            url: String,
+            placeholder: String?,
+            modifier: Modifier,
+            contentScale: ContentScale,
+            alignment: Alignment
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(url)
-                .decoderFactory(SvgDecoder.Factory()) // Support for SVGs
-                .crossfade(true)
-                .build(),
-            contentDescription = null,
-            modifier = modifier,
-            contentScale = contentScale,
-            alignment = alignment
-            // Note: If placeholder is a local resource name, you'd resolve it here
-        )
+                model =
+                        ImageRequest.Builder(LocalContext.current)
+                                .data(url)
+                                .decoderFactory(SvgDecoder.Factory()) // Support for SVGs
+                                .crossfade(true)
+                                .build(),
+                contentDescription = null,
+                modifier = modifier,
+                contentScale = contentScale,
+                alignment = alignment
+                // Note: If placeholder is a local resource name, you'd resolve it here
+                )
     }
 }
 
 /** Builder function for Image widget */
-fun imageBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRegistry): VirtualNode {
+fun imageBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
     return VWImage(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        parent = parent,
-        parentProps = data.props,
-        props = ImageProps.fromJson(data.props.value)
+            refName = data.refName,
+            commonProps = data.commonProps,
+            parent = parent,
+            parentProps = data.props,
+            props = ImageProps.fromJson(data.props.value)
     )
 }

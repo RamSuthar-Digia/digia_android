@@ -40,18 +40,19 @@ data class TextProps(
 
 /** Virtual Text widget */
 class VWText(
-    refName: String?,
-    commonProps: CommonProps?,
-    parent: VirtualNode?,
-    parentProps: Props? = null,
-    props: TextProps
-) : VirtualLeafNode<TextProps>(
-    props = props,
-    commonProps = commonProps,
-    parent = parent,
-    refName = refName,
-    parentProps = parentProps
-) {
+        refName: String?,
+        commonProps: CommonProps?,
+        parent: VirtualNode?,
+        parentProps: Props? = null,
+        props: TextProps
+) :
+        VirtualLeafNode<TextProps>(
+                props = props,
+                commonProps = commonProps,
+                parent = parent,
+                refName = refName,
+                parentProps = parentProps
+        ) {
 
     @Composable
     override fun Render(payload: RenderPayload) {
@@ -89,18 +90,22 @@ class VWText(
                 maxLines = maxLines ?: Int.MAX_VALUE,
                 textAlign = textAlign,
                 overflow = textOverflow,
-            modifier = Modifier.buildModifier(payload)
+                modifier = Modifier.buildModifier(payload)
         )
     }
 }
 
 /** Builder function for Text widget */
-fun textBuilder(data: VWNodeData, parent: VirtualNode?,registry: VirtualWidgetRegistry): VirtualNode {
+fun textBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
     return VWText(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        parent = parent,
-        parentProps = data.props,
-        props = TextProps.fromJson(data.props.value)
+            refName = data.refName,
+            commonProps = data.commonProps,
+            parent = parent,
+            parentProps = data.props,
+            props = TextProps.fromJson(data.props.value)
     )
 }

@@ -17,14 +17,14 @@ import com.digia.digiaui.framework.utils.JsonLike
 
 /** Circular Progress Indicator properties */
 data class CircularProgressProps(
-    val color: ExprOr<String>? = null,
-    val strokeWidth: ExprOr<Double>? = null
+        val color: ExprOr<String>? = null,
+        val strokeWidth: ExprOr<Double>? = null
 ) {
     companion object {
         fun fromJson(json: JsonLike): CircularProgressProps {
             return CircularProgressProps(
-                color = ExprOr.fromValue(json["color"]),
-                strokeWidth = ExprOr.fromValue(json["strokeWidth"])
+                    color = ExprOr.fromValue(json["color"]),
+                    strokeWidth = ExprOr.fromValue(json["strokeWidth"])
             )
         }
     }
@@ -32,18 +32,19 @@ data class CircularProgressProps(
 
 /** Virtual Circular Progress Indicator widget */
 class VWCircularProgressIndicator(
-    refName: String?,
-    commonProps: CommonProps?,
-    parent: VirtualNode?,
-    parentProps: Props? = null,
-    props: CircularProgressProps
-) : VirtualLeafNode<CircularProgressProps>(
-    props = props,
-    commonProps = commonProps,
-    parent = parent,
-    refName = refName,
-    parentProps = parentProps
-) {
+        refName: String?,
+        commonProps: CommonProps?,
+        parent: VirtualNode?,
+        parentProps: Props? = null,
+        props: CircularProgressProps
+) :
+        VirtualLeafNode<CircularProgressProps>(
+                props = props,
+                commonProps = commonProps,
+                parent = parent,
+                refName = refName,
+                parentProps = parentProps
+        ) {
 
     @Composable
     override fun Render(payload: RenderPayload) {
@@ -57,29 +58,33 @@ class VWCircularProgressIndicator(
         // Render Material3 CircularProgressIndicator
         if (indicatorColor != null) {
             CircularProgressIndicator(
-                modifier = Modifier.buildModifier(payload),
-                color = indicatorColor,
-                strokeWidth = strokeWidthVal?.let { it.toFloat().dp }
-                    ?: ProgressIndicatorDefaults.CircularStrokeWidth
+                    modifier = Modifier.buildModifier(payload),
+                    color = indicatorColor,
+                    strokeWidth = strokeWidthVal?.let { it.toFloat().dp }
+                                    ?: ProgressIndicatorDefaults.CircularStrokeWidth
             )
         } else {
             // Default Material3 theme color if no color is provided
             CircularProgressIndicator(
-                modifier = Modifier.buildModifier(payload),
-                strokeWidth = strokeWidthVal?.let { it.toFloat().dp }
-                    ?: ProgressIndicatorDefaults.CircularStrokeWidth
+                    modifier = Modifier.buildModifier(payload),
+                    strokeWidth = strokeWidthVal?.let { it.toFloat().dp }
+                                    ?: ProgressIndicatorDefaults.CircularStrokeWidth
             )
         }
     }
 }
 
 /** Builder function for Circular Progress Indicator */
-fun circularProgressBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRegistry): VirtualNode {
+fun circularProgressBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
     return VWCircularProgressIndicator(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        parent = parent,
-        parentProps = data.props,
-        props = CircularProgressProps.fromJson(data.props.value)
+            refName = data.refName,
+            commonProps = data.commonProps,
+            parent = parent,
+            parentProps = data.props,
+            props = CircularProgressProps.fromJson(data.props.value)
     )
 }

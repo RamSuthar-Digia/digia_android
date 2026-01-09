@@ -1,12 +1,10 @@
 package com.digia.digiaui.framework.widgets
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -29,21 +27,21 @@ import com.digia.digiaui.framework.utils.JsonLike
 
 /** Rich Text widget properties */
 data class RichTextProps(
-    val textSpans: ExprOr<List<*>>?,
-    val textStyle: JsonLike? = null,
-    val maxLines: ExprOr<Int>? = null,
-    val alignment: ExprOr<String>? = null,
-    val overflow: ExprOr<String>? = null
+        val textSpans: ExprOr<List<*>>?,
+        val textStyle: JsonLike? = null,
+        val maxLines: ExprOr<Int>? = null,
+        val alignment: ExprOr<String>? = null,
+        val overflow: ExprOr<String>? = null
 ) {
     companion object {
         @Suppress("UNCHECKED_CAST")
         fun fromJson(json: JsonLike): RichTextProps {
             return RichTextProps(
-                textSpans = ExprOr.fromValue(json["textSpans"]),
-                textStyle = json["textStyle"] as? JsonLike,
-                maxLines = ExprOr.fromValue(json["maxLines"]),
-                alignment = ExprOr.fromValue(json["alignment"]),
-                overflow = ExprOr.fromValue(json["overflow"])
+                    textSpans = ExprOr.fromValue(json["textSpans"]),
+                    textStyle = json["textStyle"] as? JsonLike,
+                    maxLines = ExprOr.fromValue(json["maxLines"]),
+                    alignment = ExprOr.fromValue(json["alignment"]),
+                    overflow = ExprOr.fromValue(json["overflow"])
             )
         }
     }
@@ -51,18 +49,19 @@ data class RichTextProps(
 
 /** Virtual RichText widget */
 class VWRichText(
-    refName: String?,
-    commonProps: CommonProps?,
-    parent: VirtualNode?,
-    parentProps: Props? = null,
-    props: RichTextProps
-) : VirtualLeafNode<RichTextProps>(
-    props = props,
-    commonProps = commonProps,
-    parent = parent,
-    refName = refName,
-    parentProps = parentProps
-) {
+        refName: String?,
+        commonProps: CommonProps?,
+        parent: VirtualNode?,
+        parentProps: Props? = null,
+        props: RichTextProps
+) :
+        VirtualLeafNode<RichTextProps>(
+                props = props,
+                commonProps = commonProps,
+                parent = parent,
+                refName = refName,
+                parentProps = parentProps
+        ) {
 
     @Composable
     override fun Render(payload: RenderPayload) {
@@ -74,60 +73,65 @@ class VWRichText(
         val baseStyle = payload.textStyle(props.textStyle)
 
         // Convert string values to Compose types
-        val textAlign = when (alignmentStr) {
-            "center" -> TextAlign.Center
-            "left" -> TextAlign.Left
-            "right" -> TextAlign.Right
-            "start" -> TextAlign.Start
-            "end" -> TextAlign.End
-            "justify" -> TextAlign.Justify
-            else -> TextAlign.Start
-        }
+        val textAlign =
+                when (alignmentStr) {
+                    "center" -> TextAlign.Center
+                    "left" -> TextAlign.Left
+                    "right" -> TextAlign.Right
+                    "start" -> TextAlign.Start
+                    "end" -> TextAlign.End
+                    "justify" -> TextAlign.Justify
+                    else -> TextAlign.Start
+                }
 
-        val textOverflow = when (overflowStr) {
-            "clip" -> TextOverflow.Clip
-            "ellipsis" -> TextOverflow.Ellipsis
-            "visible" -> TextOverflow.Visible
-            else -> TextOverflow.Clip
-        }
+        val textOverflow =
+                when (overflowStr) {
+                    "clip" -> TextOverflow.Clip
+                    "ellipsis" -> TextOverflow.Ellipsis
+                    "visible" -> TextOverflow.Visible
+                    else -> TextOverflow.Clip
+                }
 
         // Build annotated string with spans
-        val (annotatedString, clickHandlers) = remember(textSpans, baseStyle) {
-            buildRichTextContent(payload, textSpans, baseStyle)
-        }
+        val (annotatedString, clickHandlers) =
+                remember(textSpans, baseStyle) {
+                    buildRichTextContent(payload, textSpans, baseStyle)
+                }
 
         // Handle click interactions
         var modifier = Modifier.buildModifier(payload)
         if (clickHandlers.isNotEmpty()) {
-            modifier = modifier.pointerInput(clickHandlers) {
-                detectTapGestures { offset ->
-                    clickHandlers.forEach { (start, end, handler) ->
-                        // Simple range check - in production you might want more sophisticated hit testing
-                        handler()
+            modifier =
+                    modifier.pointerInput(clickHandlers) {
+                        detectTapGestures { offset ->
+                            clickHandlers.forEach { (start, end, handler) ->
+                                // Simple range check - in production you might want more
+                                // sophisticated hit testing
+                                handler()
+                            }
+                        }
                     }
-                }
-            }
         }
 
         // Render text
         androidx.compose.material3.Text(
-            text = annotatedString,
-            style = baseStyle ?: androidx.compose.ui.text.TextStyle.Default,
-            maxLines = maxLines ?: Int.MAX_VALUE,
-            textAlign = textAlign,
-            overflow = textOverflow,
-            modifier = modifier
+                text = annotatedString,
+                style = baseStyle ?: androidx.compose.ui.text.TextStyle.Default,
+                maxLines = maxLines ?: Int.MAX_VALUE,
+                textAlign = textAlign,
+                overflow = textOverflow,
+                modifier = modifier
         )
     }
 
     /**
-     * Builds the annotated string from text spans
-     * Returns pair of (AnnotatedString, List of click handlers with their ranges)
+     * Builds the annotated string from text spans Returns pair of (AnnotatedString, List of click
+     * handlers with their ranges)
      */
     private fun buildRichTextContent(
-        payload: RenderPayload,
-        textSpans: List<*>?,
-        defaultStyle: androidx.compose.ui.text.TextStyle?
+            payload: RenderPayload,
+            textSpans: List<*>?,
+            defaultStyle: androidx.compose.ui.text.TextStyle?
     ): Pair<AnnotatedString, List<ClickHandler>> {
         if (textSpans == null || textSpans.isEmpty()) {
             return Pair(AnnotatedString(""), emptyList())
@@ -145,45 +149,43 @@ class VWRichText(
                         append(text)
                         currentOffset += text.length
                     }
-                    
+
                     // Handle rich span objects
                     is Map<*, *> -> {
-                        @Suppress("UNCHECKED_CAST")
-                        val span = spanData as JsonLike
-                        
+                        @Suppress("UNCHECKED_CAST") val span = spanData as JsonLike
+
                         // Extract text
                         val text = payload.evalExpr(ExprOr.fromValue<String>(span["text"])) ?: ""
-                        
+
                         // Extract style
-                        val spanStyleJson = span["style"] as? JsonLike 
-                            ?: span["spanStyle"] as? JsonLike 
-                            ?: span["textStyle"] as? JsonLike
-                        
-                        val spanStyle = if (spanStyleJson != null) {
-                            val textStyle = payload.textStyle(spanStyleJson, defaultStyle)
-                            textStyle?.toSpanStyle()
-                        } else {
-                            null
-                        }
+                        val spanStyleJson =
+                                span["style"] as? JsonLike
+                                        ?: span["spanStyle"] as? JsonLike
+                                                ?: span["textStyle"] as? JsonLike
+
+                        val spanStyle =
+                                if (spanStyleJson != null) {
+                                    val textStyle = payload.textStyle(spanStyleJson, defaultStyle)
+                                    textStyle?.toSpanStyle()
+                                } else {
+                                    null
+                                }
 
                         // Check for gradient
-                        val gradientConfig = spanStyleJson?.let { 
-                            payload.eval<JsonLike>(it["gradient"]) 
-                        }
-                        
-                        val brush = gradientConfig?.let { 
-                            createGradientBrush(payload, it) 
-                        }
+                        val gradientConfig =
+                                spanStyleJson?.let { payload.eval<JsonLike>(it["gradient"]) }
+
+                        val brush = gradientConfig?.let { createGradientBrush(payload, it) }
 
                         // Apply style and text
-                        val finalStyle = when {
-                            brush != null -> spanStyle?.copy(brush = brush) ?: SpanStyle(brush = brush)
-                            else -> spanStyle ?: SpanStyle()
-                        }
+                        val finalStyle =
+                                when {
+                                    brush != null -> spanStyle?.copy(brush = brush)
+                                                    ?: SpanStyle(brush = brush)
+                                    else -> spanStyle ?: SpanStyle()
+                                }
 
-                        withStyle(finalStyle) {
-                            append(text)
-                        }
+                        withStyle(finalStyle) { append(text) }
 
                         // Handle click interactions
                         val onClickJson = span["onClick"] as? JsonLike
@@ -191,14 +193,14 @@ class VWRichText(
                             val startOffset = currentOffset
                             val endOffset = currentOffset + text.length
                             clickHandlers.add(
-                                ClickHandler(
-                                    start = startOffset,
-                                    end = endOffset,
-                                    handler = {
-                                        val actionFlow = ActionFlow.fromJson(onClickJson)
-                                        payload.executeAction(onClickJson, "onTap")
-                                    }
-                                )
+                                    ClickHandler(
+                                            start = startOffset,
+                                            end = endOffset,
+                                            handler = {
+                                                val actionFlow = ActionFlow.fromJson(onClickJson)
+                                                payload.executeAction(onClickJson, "onTap")
+                                            }
+                                    )
                             )
                         }
 
@@ -211,21 +213,20 @@ class VWRichText(
         return Pair(annotatedString, clickHandlers)
     }
 
-    /**
-     * Creates a gradient brush from configuration
-     */
+    /** Creates a gradient brush from configuration */
     @Composable
     private fun createGradientBrush(payload: RenderPayload, config: JsonLike): Brush? {
         val type = config["type"] as? String ?: "linear"
         val colorsData = config["colors"] as? List<*> ?: return null
-        
-        val colors = colorsData.mapNotNull { colorRef ->
-            when (colorRef) {
-                is String -> payload.evalColor(colorRef)
-                is Map<*, *> -> payload.evalColor(colorRef)
-                else -> null
-            }
-        }
+
+        val colors =
+                colorsData.mapNotNull { colorRef ->
+                    when (colorRef) {
+                        is String -> payload.evalColor(colorRef)
+                        is Map<*, *> -> payload.evalColor(colorRef)
+                        else -> null
+                    }
+                }
 
         if (colors.isEmpty()) return null
 
@@ -245,27 +246,21 @@ class VWRichText(
         }
     }
 
-    /**
-     * Data class to hold click handler information
-     */
-    private data class ClickHandler(
-        val start: Int,
-        val end: Int,
-        val handler: () -> Unit
-    )
+    /** Data class to hold click handler information */
+    private data class ClickHandler(val start: Int, val end: Int, val handler: () -> Unit)
 }
 
 /** Builder function for RichText widget */
 fun richTextBuilder(
-    data: VWNodeData,
-    parent: VirtualNode?,
-    registry: VirtualWidgetRegistry
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
 ): VirtualNode {
     return VWRichText(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        parent = parent,
-        parentProps = data.props,
-        props = RichTextProps.fromJson(data.props.value)
+            refName = data.refName,
+            commonProps = data.commonProps,
+            parent = parent,
+            parentProps = data.props,
+            props = RichTextProps.fromJson(data.props.value)
     )
 }
