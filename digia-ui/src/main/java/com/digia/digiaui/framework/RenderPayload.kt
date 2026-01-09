@@ -6,6 +6,8 @@ import androidx.compose.ui.text.TextStyle
 import com.digia.digiaui.framework.expr.ScopeContext
 import com.digia.digiaui.framework.expression.evaluate
 import com.digia.digiaui.framework.models.ExprOr
+import com.digia.digiaui.framework.state.LocalStateContextProvider
+import com.digia.digiaui.framework.state.StateScopeContext
 import com.digia.digiaui.network.APIModel
 import defaultTextStyle
 import makeTextStyle
@@ -21,6 +23,15 @@ data class RenderPayload(
 
     /* ---------------- Expression evaluation ---------------- */
 
+    /**
+     * Evaluate an expression (NON-REACTIVE).
+     * Use this for:
+     * - Static props that don't change
+     * - Action expressions
+     * - Initial values
+     * 
+     * For reactive state values in widgets, use observeState() instead.
+     */
     inline fun <reified T : Any> evalExpr(
         expr: ExprOr<T>?,
         noinline decoder: ((Any) -> T?)? = null
@@ -31,6 +42,35 @@ data class RenderPayload(
         scopeContext: ScopeContext? = null,
         noinline decoder: ((Any?) -> T?)? = null
     ): T? = evaluate(expression, chainExprContext(scopeContext), decoder)
+
+
+    @Composable
+    inline fun <reified T : Any> evalObserve(
+        expression: Any?,
+        scopeContext: ScopeContext? = null,
+        noinline decoder: ((Any?) -> T?)? = null
+    ): T? {
+        val stateContext= LocalStateContextProvider.current
+stateContext?.startTracking()
+        val data =evaluate(expression, chainExprContext(scopeContext), decoder)
+     val trackList=   stateContext?.stopTracking()
+        trackList?.forEach { e -> stateContext.observe(e) }
+        return data
+    }
+
+    @Composable
+    inline fun  <reified T : Any> evalObserve(
+        expr: ExprOr<T>?,
+        noinline decoder: ((Any) -> T?)? = null
+    ): T? {
+        val stateContext = LocalStateContextProvider.current
+        stateContext?.startTracking()
+        val data= expr?.evaluate(scopeContext, decoder)
+        val trackList=   stateContext?.stopTracking()
+        trackList?.forEach { e -> stateContext.observe(e) }
+        return data
+    }
+
 
     /* ---------------- Hierarchy helpers ---------------- */
 
@@ -60,6 +100,9 @@ data class RenderPayload(
             scopeContext = chainExprContext(scopeContext)
         )
 }
+
+
+
 
 
 @Composable

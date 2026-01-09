@@ -8,78 +8,100 @@ import androidx.compose.runtime.mutableStateOf
 
 class StateContext(
     val namespace: String? = null,
-    val parent: StateContext? = null,
     private val tree: StateTree,
     initialState: Map<String, Any?> = emptyMap()
 ) {
 
-    private class Entry(
-        var value: Any?,
-        val version: MutableState<Int> = mutableIntStateOf(0)
-    )
+    /* ---------------- State ---------------- */
 
-    private val entries = mutableMapOf<String, Entry>()
-    private val dirtyEntries = mutableSetOf<Entry>()
+    private val values = mutableMapOf<String, Any?>()
+    private val scopeVersion = mutableIntStateOf(0)
+    private var dirty = false
+
+    /* ---------------- Tracking ---------------- */
+
+    private var isTracking = false
+    private var readScopes: MutableSet<String>? = null
 
     init {
-        initialState.forEach { (k, v) ->
-            entries[k] = Entry(v)
-        }
-        tree.attach(parent, this)
+        values.putAll(initialState)
     }
 
     fun dispose() {
         tree.childrenOf(this).forEach { it.dispose() }
-        tree.detach(parent, this)
+        tree.detach(this)
     }
 
-    /* -------- Reads -------- */
+    /* ---------------- Tracking ---------------- */
 
-    fun get(key: String): Any? =
-        entries[key]?.value ?: parent?.get(key)
+    fun startTracking() {
+        isTracking = true
+        readScopes = mutableSetOf()
+    }
+
+    fun stopTracking(): Set<String> {
+        isTracking = false
+        return readScopes.orEmpty().also { readScopes = null }
+    }
+
+    private fun markRead(owner: StateContext) {
+        if (!isTracking) return
+        owner.namespace?.let { readScopes?.add(it) }
+    }
+
+    /* ---------------- Reads ---------------- */
+
+    fun get(key: String): Any? {
+        val owner = tree.findOwner(this, key) ?: return null
+        markRead(owner)
+        return owner.values[key]
+    }
 
     @Composable
-    fun observe(key: String): Any? {
-        val entry = entries[key]
-        if (entry != null) {
-            entry.version.value
-            return entry.value
+    fun observe(stateName: String) {
+        if (stateName == namespace) {
+            scopeVersion.intValue
+            return
         }
-        return parent?.observe(key)
+
+        tree.parentOf(this)?.observe(stateName)
     }
 
-    /* -------- Writes -------- */
+    /* ---------------- Writes ---------------- */
 
     fun set(key: String, value: Any?, notify: Boolean = true) {
-        val entry = entries.getOrPut(key) { Entry(null) }
-        entry.value = value
-        if (notify) entry.version.value++
-        else dirtyEntries.add(entry)
+        values[key] = value
+        if (notify) flush()
+        else dirty = true
     }
 
-   private fun flush() {
-        dirtyEntries.forEach { it.version.value++ }
-        dirtyEntries.clear()
+    /* ---------------- Flush ---------------- */
 
-        // 🔥 Downward propagation handled by tree
-        tree.childrenOf(this).forEach { it.flush() }
+    private fun flush() {
+        scopeVersion.intValue++
+        dirty = false
+
+        tree.childrenOf(this).forEach { it.flushFromParent() }
     }
 
+    private fun flushFromParent() {
+        scopeVersion.intValue++
+        dirty = false
 
-    /* -------- Utilities -------- */
+        tree.childrenOf(this).forEach { it.flushFromParent() }
+    }
+
+    /* ---------------- Utilities ---------------- */
+
     fun snapshot(): Map<String, Any?> {
-        val result = mutableMapOf<String, Any?>()
-        entries.forEach { (k, v) ->
-            result[k] = v.value
-        }
-        return result
+        markRead(this)
+        return values.toMap()
     }
-
 
     fun containsKey(key: String): Boolean =
-        entries.containsKey(key) || parent?.containsKey(key) == true
+        tree.findOwner(this, key) != null
+
+    fun containsLocal(key: String): Boolean =
+        values.containsKey(key)
 }
-
-
-
 

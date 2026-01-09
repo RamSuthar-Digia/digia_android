@@ -11,17 +11,15 @@ val LocalStateTree = compositionLocalOf { StateTree() }
 fun StateScope(
     namespace: String?,
     initialState: Map<String, Any?> = emptyMap(),
-    content: @Composable () -> Unit
+    content: @Composable (stateContext: StateContext) -> Unit
 ) {
     // Use existing tree or create a new one
     val tree = LocalStateTree.current
 
-    val parentContext = LocalStateContextProvider.current
 
     val stateContext = remember {
         StateContext(
             namespace = namespace,
-            parent = parentContext,
             tree = tree,
             initialState = initialState
         )
@@ -34,6 +32,6 @@ fun StateScope(
     CompositionLocalProvider(
         LocalStateContextProvider provides stateContext,
     ) {
-        content()
+        content(stateContext)
     }
 }
