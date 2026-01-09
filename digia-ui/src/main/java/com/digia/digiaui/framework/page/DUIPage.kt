@@ -2,11 +2,18 @@ package com.digia.digiaui.framework.page
 
 import LocalUIResources
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.digia.digiaui.framework.RenderPayload
 import com.digia.digiaui.framework.VirtualWidgetRegistry
 import com.digia.digiaui.framework.expr.DefaultScopeContext
+import com.digia.digiaui.framework.expr.ScopeContext
 import com.digia.digiaui.framework.models.PageDefinition
+import com.digia.digiaui.framework.state.LocalStateTree
+import com.digia.digiaui.framework.state.StateContext
+import com.digia.digiaui.framework.state.StateScopeContext
+import com.digia.digiaui.framework.state.StateTree
 
 /** DUIPage - renders a page from its definition Mirrors Flutter DUIPage */
 @Composable
@@ -49,8 +56,51 @@ fun DUIPage(
 
     // Create render payload
     val payload =
-            RenderPayload( scopeContext = scopeContext)
+            RenderPayload( scopeContext = _createExprContext(params = resolvedPageArgs+resolvedState,
+                    stateContext = null,
+                    scopeContext = scopeContext),
+
+            )
 
     // Render the widget
-    virtualWidget.ToWidget(payload)
+    RootStateTreeProvider {
+        virtualWidget.ToWidget(payload)
+    }
+}
+
+
+@Composable
+fun RootStateTreeProvider(content: @Composable () -> Unit) {
+    val tree = remember { StateTree() } // single tree for entire app/session
+
+    CompositionLocalProvider(
+        LocalStateTree provides tree
+    ) {
+        content()
+    }
+}
+
+
+internal fun _createExprContext(params:Map<String, Any?>,stateContext: StateContext?,scopeContext: ScopeContext): ScopeContext {
+    val pageVariables = mapOf(
+        // Backward compatibility key
+        "pageParams" to params,
+        // New convention: spread the params map into the new map
+        *params.toList().toTypedArray()
+    )
+
+    if (stateContext == null) {
+        return DefaultScopeContext(
+            name = "",
+           variables = pageVariables,
+            enclosing =scopeContext
+        );
+    }
+
+    return StateScopeContext(
+        state= stateContext,
+        variables = pageVariables,
+        enclosing= scopeContext,
+    );
+
 }

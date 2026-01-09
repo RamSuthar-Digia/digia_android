@@ -4,7 +4,7 @@ import com.digia.digiaexpr.context.ExprContext
 
 
 /// A basic implementation of ExprContext that can be used as-is or extended.
-class DefaultScopeContext(
+open class DefaultScopeContext(
     override val name: String = "",
     variables: Map<String, Any?>,
     enclosing: ExprContext? = null

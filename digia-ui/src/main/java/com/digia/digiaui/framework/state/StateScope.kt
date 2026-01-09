@@ -1,0 +1,39 @@
+package com.digia.digiaui.framework.state
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
+val LocalStateTree = compositionLocalOf { StateTree() }
+
+@Composable
+fun StateScope(
+    namespace: String?,
+    initialState: Map<String, Any?> = emptyMap(),
+    content: @Composable () -> Unit
+) {
+    // Use existing tree or create a new one
+    val tree = LocalStateTree.current
+
+    val parentContext = LocalStateContextProvider.current
+
+    val stateContext = remember {
+        StateContext(
+            namespace = namespace,
+            parent = parentContext,
+            tree = tree,
+            initialState = initialState
+        )
+    }
+
+    DisposableEffect(stateContext) {
+        onDispose { stateContext.dispose() }
+    }
+
+    CompositionLocalProvider(
+        LocalStateContextProvider provides stateContext,
+    ) {
+        content()
+    }
+}
