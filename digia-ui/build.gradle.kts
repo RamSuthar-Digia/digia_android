@@ -73,6 +73,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    
+
 
     implementation(
         libs.quickjs.wrapper.java
@@ -80,6 +82,13 @@ dependencies {
     implementation(
         libs.quickjs.wrapper.android
     )
+
+    // Material Icons
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // ExoPlayer for Video Playback
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-ui:1.4.1")
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")
@@ -103,6 +112,8 @@ dependencies {
 
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-svg:2.6.0")
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
     implementation(libs.androidx.compose.runtime)
     implementation(libs.compose.material3)
     implementation(libs.androidx.compose.foundation.layout)

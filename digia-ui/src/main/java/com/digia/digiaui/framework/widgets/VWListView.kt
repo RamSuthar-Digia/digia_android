@@ -1,10 +1,6 @@
 package com.digia.digiaui.framework.widgets
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -21,35 +17,31 @@ import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
 import com.digia.digiaui.framework.utils.JsonLike
-import com.digia.digiaui.framework.utils.applyIf
 
-/**
- * Scroll direction for ListView
- */
+/** Scroll direction for ListView */
 enum class ScrollDirection {
-    VERTICAL, HORIZONTAL
+    VERTICAL,
+    HORIZONTAL
 }
 
-/**
- * ListView widget properties
- */
+/** ListView widget properties */
 data class ListViewProps(
-    val dataSource: Any? = null,
-    val scrollDirection: String? = null,
-    val reverse: Boolean? = null,
-    val shrinkWrap: Boolean? = null,
-    val allowScroll: Boolean? = null,
-    val initialScrollPosition: String? = null
+        val dataSource: Any? = null,
+        val scrollDirection: String? = null,
+        val reverse: Boolean? = null,
+        val shrinkWrap: Boolean? = null,
+        val allowScroll: Boolean? = null,
+        val initialScrollPosition: String? = null
 ) {
     companion object {
         fun fromJson(json: JsonLike): ListViewProps {
             return ListViewProps(
-                dataSource = json["dataSource"],
-                scrollDirection = json["scrollDirection"] as? String,
-                reverse = json["reverse"] as? Boolean,
-                shrinkWrap = json["shrinkWrap"] as? Boolean,
-                allowScroll = json["allowScroll"] as? Boolean,
-                initialScrollPosition = json["initialScrollPosition"] as? String
+                    dataSource = json["dataSource"],
+                    scrollDirection = json["scrollDirection"] as? String,
+                    reverse = json["reverse"] as? Boolean,
+                    shrinkWrap = json["shrinkWrap"] as? Boolean,
+                    allowScroll = json["allowScroll"] as? Boolean,
+                    initialScrollPosition = json["initialScrollPosition"] as? String
             )
         }
     }
@@ -58,24 +50,25 @@ data class ListViewProps(
 /**
  * Virtual ListView widget
  *
- * Renders a scrollable list of items from a data source.
- * Each item is rendered using the child template widget.
+ * Renders a scrollable list of items from a data source. Each item is rendered using the child
+ * template widget.
  */
 class VWListView(
-    refName: String? = null,
-    commonProps: CommonProps? = null,
-    props: ListViewProps,
-    parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
-    parentProps: Props? = null
-) : VirtualCompositeNode<ListViewProps>(
-    props = props,
-    commonProps = commonProps,
-    parentProps= parentProps,
-    parent = parent,
-    refName = refName,
-    slots = slots
-) {
+        refName: String? = null,
+        commonProps: CommonProps? = null,
+        props: ListViewProps,
+        parent: VirtualNode? = null,
+        slots: Map<String, List<VirtualNode>>? = null,
+        parentProps: Props? = null
+) :
+        VirtualCompositeNode<ListViewProps>(
+                props = props,
+                commonProps = commonProps,
+                parentProps = parentProps,
+                parent = parent,
+                refName = refName,
+                slots = slots
+        ) {
 
     private val shouldRepeatChild: Boolean
         get() = props.dataSource != null
@@ -101,9 +94,10 @@ class VWListView(
                 when (initial.lowercase()) {
                     "start" -> listState.scrollToItem(0)
                     "end" -> if (items.isNotEmpty()) listState.scrollToItem(items.size - 1)
-                    else -> initial.toIntOrNull()?.takeIf { it in items.indices }?.let {
-                        listState.scrollToItem(it)
-                    }
+                    else ->
+                            initial.toIntOrNull()?.takeIf { it in items.indices }?.let {
+                                listState.scrollToItem(it)
+                            }
                 }
             }
         }
@@ -113,32 +107,29 @@ class VWListView(
         when (scrollDirection) {
             ScrollDirection.VERTICAL -> {
                 LazyColumn(
-                    state = listState,
-                    reverseLayout = reverse,
-//                    modifier = Modifier.buildModifier(payload).applyIf(!shrinkWrap,{ Modifier.fillMaxHeight()})
-                ) {
+                        state = listState,
+                        reverseLayout = reverse,
+                        //                    modifier =
+                        // Modifier.buildModifier(payload).applyIf(!shrinkWrap,{
+                        // Modifier.fillMaxHeight()})
+                        ) {
                     itemsIndexed(items) { index, item ->
-                        val scopedPayload = payload.copyWithChainedContext(
-                            createExprContext(item, index)
-                        )
+                        val scopedPayload =
+                                payload.copyWithChainedContext(createExprContext(item, index))
                         child?.ToWidget(scopedPayload)
                     }
                 }
             }
-
-
-
             ScrollDirection.HORIZONTAL -> {
                 LazyRow(
-                    state = listState,
-                    reverseLayout = reverse,
-//                    modifier = Modifier.buildModifier(payload)
-//                      .applyIf(shrinkWrap,{ Modifier.fillMaxWidth()})
-                ) {
+                        state = listState,
+                        reverseLayout = reverse,
+                        //                    modifier = Modifier.buildModifier(payload)
+                        //                      .applyIf(shrinkWrap,{ Modifier.fillMaxWidth()})
+                        ) {
                     itemsIndexed(items) { index, item ->
-                        val scopedPayload = payload.copyWithChainedContext(
-                            createExprContext(item, index)
-                        )
+                        val scopedPayload =
+                                payload.copyWithChainedContext(createExprContext(item, index))
                         child?.ToWidget(scopedPayload)
                     }
                 }
@@ -146,44 +137,44 @@ class VWListView(
         }
     }
 
-    private fun toScrollDirection(value: String?): ScrollDirection = when (value?.lowercase()) {
-        "horizontal" -> ScrollDirection.HORIZONTAL
-        "vertical" -> ScrollDirection.VERTICAL
-        else -> ScrollDirection.VERTICAL
-    }
+    private fun toScrollDirection(value: String?): ScrollDirection =
+            when (value?.lowercase()) {
+                "horizontal" -> ScrollDirection.HORIZONTAL
+                "vertical" -> ScrollDirection.VERTICAL
+                else -> ScrollDirection.VERTICAL
+            }
 
     private fun createExprContext(item: Any?, index: Int): DefaultScopeContext {
-        val listObj = mapOf(
-            "currentItem" to item,
-            "index" to index
-        )
+        val listObj = mapOf("currentItem" to item, "index" to index)
 
-        val variables = mutableMapOf<String, Any?>().apply {
-            putAll(listObj)
-            refName?.let { name -> put(name, listObj) }
-        }
+        val variables =
+                mutableMapOf<String, Any?>().apply {
+                    putAll(listObj)
+                    refName?.let { name -> put(name, listObj) }
+                }
 
         return DefaultScopeContext(variables = variables)
     }
 }
 
-
 /** Builder function for ListView widget */
-fun listViewBuilder(data: VWNodeData, parent: VirtualNode?,registry: VirtualWidgetRegistry): VirtualNode {
+fun listViewBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
     // Get the first child from childGroups as the template
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { data ->
-            registry.createWidget(data, parent)
-        }
-    }
+    val childrenData =
+            data.childGroups?.mapValues { (_, childrenData) ->
+                childrenData.map { data -> registry.createWidget(data, parent) }
+            }
 
     return VWListView(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        parent= parent,
-        parentProps = data.parentProps,
-        props = ListViewProps.fromJson(data.props.value ),
-        slots = childrenData
+            refName = data.refName,
+            commonProps = data.commonProps,
+            parent = parent,
+            parentProps = data.parentProps,
+            props = ListViewProps.fromJson(data.props.value),
+            slots = childrenData
     )
-
 }

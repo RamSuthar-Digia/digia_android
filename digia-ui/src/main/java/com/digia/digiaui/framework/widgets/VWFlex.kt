@@ -1,9 +1,9 @@
 package com.digia.digiaui.framework.widgets
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,62 +18,58 @@ import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
 import com.digia.digiaui.framework.utils.JsonLike
 
-/**
- * Flex direction - horizontal (Row) or vertical (Column)
- */
+/** Flex direction - horizontal (Row) or vertical (Column) */
 enum class FlexDirection {
-    HORIZONTAL, VERTICAL
+    HORIZONTAL,
+    VERTICAL
 }
 
-/**
- * Flex widget properties
- */
+/** Flex widget properties */
 data class FlexProps(
-    val direction: FlexDirection,
-    val mainAxisAlignment: String? = null,
-    val crossAxisAlignment: String? = null,
-    val mainAxisSize: String? = null,
-    val dataSource: Any? = null,
-    val spacing: Double? = null,
-    val startSpacing: Double? = null,
-    val endSpacing: Double? = null,
-    val isScrollable: Boolean? = null
+        val direction: FlexDirection,
+        val mainAxisAlignment: String? = null,
+        val crossAxisAlignment: String? = null,
+        val mainAxisSize: String? = null,
+        val dataSource: Any? = null,
+        val spacing: Double? = null,
+        val startSpacing: Double? = null,
+        val endSpacing: Double? = null,
+        val isScrollable: Boolean? = null
 ) {
     companion object {
         fun fromJson(json: JsonLike, direction: FlexDirection): FlexProps {
             return FlexProps(
-                direction = direction,
-                mainAxisAlignment = json["mainAxisAlignment"] as? String,
-                crossAxisAlignment = json["crossAxisAlignment"] as? String,
-                mainAxisSize = json["mainAxisSize"] as? String,
-                dataSource = json["dataSource"],
-                spacing = (json["spacing"] as? Number)?.toDouble(),
-                startSpacing = (json["startSpacing"] as? Number)?.toDouble(),
-                endSpacing = (json["endSpacing"] as? Number)?.toDouble(),
-                isScrollable = json["isScrollable"] as? Boolean
+                    direction = direction,
+                    mainAxisAlignment = json["mainAxisAlignment"] as? String,
+                    crossAxisAlignment = json["crossAxisAlignment"] as? String,
+                    mainAxisSize = json["mainAxisSize"] as? String,
+                    dataSource = json["dataSource"],
+                    spacing = (json["spacing"] as? Number)?.toDouble(),
+                    startSpacing = (json["startSpacing"] as? Number)?.toDouble(),
+                    endSpacing = (json["endSpacing"] as? Number)?.toDouble(),
+                    isScrollable = json["isScrollable"] as? Boolean
             )
         }
     }
 }
 
-/**
- * Virtual Flex widget - base for Column and Row
- */
+/** Virtual Flex widget - base for Column and Row */
 class VWFlex(
-    refName: String? = null,
-    commonProps: CommonProps? = null,
-    props: FlexProps,
-    parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
-    parentProps: Props? = null
-) : VirtualCompositeNode<FlexProps>(
-    props = props,
-    commonProps = commonProps,
-    parentProps= parentProps,
-    parent = parent,
-    refName = refName,
-    slots = slots
-) {
+        refName: String? = null,
+        commonProps: CommonProps? = null,
+        props: FlexProps,
+        parent: VirtualNode? = null,
+        slots: Map<String, List<VirtualNode>>? = null,
+        parentProps: Props? = null
+) :
+        VirtualCompositeNode<FlexProps>(
+                props = props,
+                commonProps = commonProps,
+                parentProps = parentProps,
+                parent = parent,
+                refName = refName,
+                slots = slots
+        ) {
 
     private val shouldRepeatChild: Boolean
         get() = props.dataSource != null
@@ -86,11 +82,12 @@ class VWFlex(
             return
         }
 
-        val flexWidget = if (shouldRepeatChild) {
-            buildRepeatingFlex(payload)
-        } else {
-            buildStaticFlex(payload)
-        }
+        val flexWidget =
+                if (shouldRepeatChild) {
+                    buildRepeatingFlex(payload)
+                } else {
+                    buildStaticFlex(payload)
+                }
 
         // Wrap in scroll view if needed
         wrapWithScrollViewIfNeeded({ flexWidget })
@@ -103,9 +100,7 @@ class VWFlex(
 
         buildFlex(payload) {
             dataItems.forEachIndexed { index, item ->
-                val scopedPayload = payload.copyWithChainedContext(
-                    createExprContext(item, index)
-                )
+                val scopedPayload = payload.copyWithChainedContext(createExprContext(item, index))
                 childToRepeat.ToWidget(scopedPayload)
             }
         }
@@ -113,11 +108,7 @@ class VWFlex(
 
     @Composable
     private fun buildStaticFlex(payload: RenderPayload) {
-        buildFlex(payload) {
-            children?.forEach { child ->
-                child.ToWidget(payload)
-            }
-        }
+        buildFlex(payload) { children?.forEach { child -> child.ToWidget(payload) } }
     }
 
     @Composable
@@ -127,13 +118,9 @@ class VWFlex(
         if (isScrollable) {
             val scrollState = rememberScrollState()
             if (props.direction == FlexDirection.VERTICAL) {
-                Column(modifier = Modifier.verticalScroll(scrollState)) {
-                    content()
-                }
+                Column(modifier = Modifier.verticalScroll(scrollState)) { content() }
             } else {
-                Row(modifier = Modifier.horizontalScroll(scrollState)) {
-                    content()
-                }
+                Row(modifier = Modifier.horizontalScroll(scrollState)) { content() }
             }
         } else {
             content()
@@ -141,42 +128,46 @@ class VWFlex(
     }
 
     @Composable
-    private fun buildFlex(payload: RenderPayload,content: @Composable () -> Unit,) {
+    private fun buildFlex(
+            payload: RenderPayload,
+            content: @Composable () -> Unit,
+    ) {
         val spacing = (props.spacing ?: 0.0).dp
         val startSpacing = (props.startSpacing ?: 0.0).dp
         val endSpacing = (props.endSpacing ?: 0.0).dp
         val mainAxisSize = props.mainAxisSize ?: "min"
 
-        val mainAxisAlignment = when (props.direction) {
-            FlexDirection.VERTICAL -> toMainAxisAlignmentVertical(props.mainAxisAlignment)
-            FlexDirection.HORIZONTAL -> toMainAxisAlignmentHorizontal(props.mainAxisAlignment)
-        }
-        
-        val crossAxisAlignment = when (props.direction) {
-            FlexDirection.VERTICAL -> toHorizontalAlignment(props.crossAxisAlignment)
-            FlexDirection.HORIZONTAL -> toVerticalAlignment(props.crossAxisAlignment)
-        }
+        val mainAxisAlignment =
+                when (props.direction) {
+                    FlexDirection.VERTICAL -> toMainAxisAlignmentVertical(props.mainAxisAlignment)
+                    FlexDirection.HORIZONTAL ->
+                            toMainAxisAlignmentHorizontal(props.mainAxisAlignment)
+                }
+
+        val crossAxisAlignment =
+                when (props.direction) {
+                    FlexDirection.VERTICAL -> toHorizontalAlignment(props.crossAxisAlignment)
+                    FlexDirection.HORIZONTAL -> toVerticalAlignment(props.crossAxisAlignment)
+                }
 
         when (props.direction) {
             FlexDirection.VERTICAL -> {
                 Column(
-                    modifier = Modifier
-                        .padding(top = startSpacing, bottom = endSpacing).buildModifier( payload),
-                    verticalArrangement = mainAxisAlignment as Arrangement.Vertical,
-                    horizontalAlignment = crossAxisAlignment as Alignment.Horizontal
-                ) {
-                    content()
-                }
+                        modifier =
+                                Modifier.padding(top = startSpacing, bottom = endSpacing)
+                                        .buildModifier(payload),
+                        verticalArrangement = mainAxisAlignment as Arrangement.Vertical,
+                        horizontalAlignment = crossAxisAlignment as Alignment.Horizontal
+                ) { content() }
             }
             FlexDirection.HORIZONTAL -> {
                 Row(
-                    modifier = Modifier
-                        .padding(start = startSpacing, end = endSpacing).buildModifier(payload),
-                    horizontalArrangement = mainAxisAlignment as Arrangement.Horizontal,
-                    verticalAlignment = crossAxisAlignment as Alignment.Vertical
-                ) {
-                    content()
-                }
+                        modifier =
+                                Modifier.padding(start = startSpacing, end = endSpacing)
+                                        .buildModifier(payload),
+                        horizontalArrangement = mainAxisAlignment as Arrangement.Horizontal,
+                        verticalAlignment = crossAxisAlignment as Alignment.Vertical
+                ) { content() }
             }
         }
     }
@@ -224,57 +215,54 @@ class VWFlex(
     }
 
     private fun createExprContext(item: Any?, index: Int): DefaultScopeContext {
-        val flexObj = mapOf(
-            "currentItem" to item,
-            "index" to index
-        )
+        val flexObj = mapOf("currentItem" to item, "index" to index)
 
         val variables = mutableMapOf<String, Any?>()
         variables.putAll(flexObj)
-        
-        // Add named reference if refName is provided
-        refName?.let { name ->
-            variables[name] = flexObj
-        }
 
-        return DefaultScopeContext(
-            variables = variables
-        )
+        // Add named reference if refName is provided
+        refName?.let { name -> variables[name] = flexObj }
+
+        return DefaultScopeContext(variables = variables)
     }
 }
 
 /** Builder function for Column widget */
-fun columnBuilder(data: VWNodeData,parent: VirtualNode?, registry:VirtualWidgetRegistry): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { data ->
-            registry.createWidget(data, parent)
-        }
-    }
+fun columnBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
+    val childrenData =
+            data.childGroups?.mapValues { (_, childrenData) ->
+                childrenData.map { data -> registry.createWidget(data, parent) }
+            }
     return VWFlex(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        props = FlexProps.fromJson(data.props.value, FlexDirection.VERTICAL),
-        slots = childrenData,
-        parent= parent,
-        parentProps =  data.parentProps,
-
+            refName = data.refName,
+            commonProps = data.commonProps,
+            props = FlexProps.fromJson(data.props.value, FlexDirection.VERTICAL),
+            slots = childrenData,
+            parent = parent,
+            parentProps = data.parentProps,
     )
 }
 
 /** Builder function for Row widget */
-fun rowBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRegistry): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { data ->
-            registry.createWidget(data, parent)
-        }
-    }
+fun rowBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
+    val childrenData =
+            data.childGroups?.mapValues { (_, childrenData) ->
+                childrenData.map { data -> registry.createWidget(data, parent) }
+            }
     return VWFlex(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        props = FlexProps.fromJson(data.props.value , FlexDirection.HORIZONTAL),
-        slots = childrenData,
-        parent= parent,
-        parentProps = data.parentProps
-
+            refName = data.refName,
+            commonProps = data.commonProps,
+            props = FlexProps.fromJson(data.props.value, FlexDirection.HORIZONTAL),
+            slots = childrenData,
+            parent = parent,
+            parentProps = data.parentProps
     )
 }
