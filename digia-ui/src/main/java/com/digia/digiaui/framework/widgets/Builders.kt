@@ -31,4 +31,7 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
     register("digia/textFormField", ::textFormFieldBuilder)
     register("digia/videoPlayer", ::videoPlayerBuilder)
     register("digia/button", ::buttonBuilder)
+    register("digia/image", ::imageBuilder)
+    register("digia/container", ::containerBuilder)
+    register("digia/carousel", ::carouselBuilder)
 }
