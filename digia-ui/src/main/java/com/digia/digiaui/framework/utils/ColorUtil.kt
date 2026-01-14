@@ -39,11 +39,26 @@ object ColorUtil {
     /// Note that when no alpha/opacity is specified, 0xFF is assumed.
     ///
     fun hexToInt(hex: String): Int {
-        val hexDigits = if (hex.startsWith('#')) hex.substring(1) else hex
-        val hexMask = if (hexDigits.length <= 6) 0xFF000000.toInt() else 0
-        val hexValue = hexDigits.toInt(16)
-        require(hexValue in 0..0xFFFFFFFF)
-        return hexValue or hexMask
+        var hexDigits = if (hex.startsWith('#')) hex.substring(1) else hex
+
+        // Handle 3-digit hex (RGB -> RRGGBB)
+        if (hexDigits.length == 3) {
+            hexDigits = hexDigits.map { "$it$it" }.joinToString("")
+        }
+
+        // Handle 6-digit hex (RRGGBB -> FF RRGGBB)
+        if (hexDigits.length == 6) {
+            // Add alpha FF (fully opaque)
+            hexDigits = "FF$hexDigits"
+        }
+
+        // Now hexDigits should be 8 characters (AARRGGBB format)
+        if (hexDigits.length != 8) {
+            throw IllegalArgumentException("Invalid hex color format: $hex")
+        }
+
+        // Parse as unsigned 32-bit integer
+        return hexDigits.toLong(16).toInt()
     }
 
     ///
@@ -120,7 +135,14 @@ object ColorUtil {
 
         if (value.isEmpty()) return null
 
-        return tryFromHexString(value) ?: tryFromRgbaString(value)
+        // Try hex format first
+        val trimmedValue = value.trim()
+        if (isValidColorHex(trimmedValue)) {
+            return tryFromHexString(trimmedValue)
+        }
+
+        // Try RGBA format
+        return tryFromRgbaString(trimmedValue)
     }
 
     ///
@@ -154,7 +176,7 @@ object ColorUtil {
             h = "#$h"
         }
 
-        if (h.length == 7) {
+        if (h.length == 7 || h.length == 9) {
             return h
         }
 
@@ -175,19 +197,31 @@ object ColorUtil {
     /// The result will be provided as UPPER CASE. Hex can be returned without alpha
     /// channel information (transparency), with the [skipAlphaIfOpaque] flag set to `true`.
     fun toHexString(
-            color: Color,
-            includeHashSign: Boolean = true,
-            skipAlphaIfOpaque: Boolean = true
+        color: Color,
+        includeHashSign: Boolean = true,
+        skipAlphaIfOpaque: Boolean = true
     ): String {
         val alpha = (color.alpha * 255).roundToInt() and 0xff
-        val alphaString = if (skipAlphaIfOpaque && alpha == 255) "" else padRadix(alpha)
-        val hex =
-                (if (includeHashSign) "#" else "") +
-                        alphaString +
-                        padRadix((color.red * 255).roundToInt() and 0xff) +
-                        padRadix((color.green * 255).roundToInt() and 0xff) +
-                        padRadix((color.blue * 255).roundToInt() and 0xff)
-        return hex.uppercase()
+        val red = (color.red * 255).roundToInt() and 0xff
+        val green = (color.green * 255).roundToInt() and 0xff
+        val blue = (color.blue * 255).roundToInt() and 0xff
+
+        return if (skipAlphaIfOpaque && alpha == 255) {
+            // Return 6-digit hex (#RRGGBB)
+            val hex = (if (includeHashSign) "#" else "") +
+                    padRadix(red) +
+                    padRadix(green) +
+                    padRadix(blue)
+            hex.uppercase()
+        } else {
+            // Return 8-digit hex (#AARRGGBB)
+            val hex = (if (includeHashSign) "#" else "") +
+                    padRadix(alpha) +
+                    padRadix(red) +
+                    padRadix(green) +
+                    padRadix(blue)
+            hex.uppercase()
+        }
     }
 
     // Shorthand for padLeft of RadixString, DRY.
@@ -197,4 +231,9 @@ object ColorUtil {
         val rgb = Random.nextInt(0xFFFFFF)
         return Color(rgb).copy(alpha = opacity)
     }
+
+    /// Extension function to parse color with better error handling
+    fun String.toColorOrNull(): Color? = fromString(this)
+
+    fun String.toColor(default: Color = Color.Transparent): Color = fromStringOrDefault(this, default)
 }
