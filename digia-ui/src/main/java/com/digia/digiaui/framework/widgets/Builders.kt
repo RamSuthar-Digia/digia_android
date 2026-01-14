@@ -47,12 +47,14 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
     register("digia/container", ::containerBuilder)
     register("digia/carousel", ::carouselBuilder)
     register("digia/wrap", ::wrapBuilder)
-    register("digia/stack",::stackBuilder)
+
+    register("digia/stack", ::stackBuilder)
+    register("digia/styledHorizontalDivider", ::styledHorizontalDividerBuilder)
+
     register("fw/sizedBox",::sizedBoxBuilder)
     register("fw/sized_box",::sizedBoxBuilder)
     register("digia/gridView",::dummyBuilder)
     register("digia/richText",::dummyBuilder)
-    register("digia/styledHorizontalDivider",::dummyBuilder)
     register("digia/calendar",::dummyBuilder)
 }
 
