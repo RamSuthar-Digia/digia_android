@@ -67,7 +67,7 @@ class GotoPageProcessor : ActionProcessor<GotoPageAction>() {
     ): Any? {
         try {
             // Evaluate page data - matches Flutter's deepEvaluate
-            val pageData = action.pageData?.evaluate<JsonLike>(scopeContext)
+            val pageData = action.pageData?.deepEvaluate(scopeContext) as? JsonLike
             if (pageData == null) {
                 println("GotoPageAction: No pageData provided")
                 return null

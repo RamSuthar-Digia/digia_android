@@ -10,6 +10,7 @@ import asSafe
 import com.digia.digiaui.config.model.DUIConfig
 import com.digia.digiaui.framework.actions.ActionExecutor
 import com.digia.digiaui.framework.actions.ActionProvider
+import com.digia.digiaui.framework.component.DUIComponent
 import com.digia.digiaui.framework.logging.Logger
 import com.digia.digiaui.framework.models.ComponentDefinition
 import com.digia.digiaui.framework.models.PageDefinition
@@ -311,7 +312,7 @@ class DUIFactory private constructor() {
             fontFactory = resources.fontFactory
         )
 
-        ResourceProvider(mergedResources) {
+        ResourceProvider(mergedResources, apiModels = configProvider.getAllApiModels()) {
             DUIComponent(
                 componentId = componentId,
                 args = args,
@@ -322,20 +323,7 @@ class DUIFactory private constructor() {
         }
     }
 
-    @Composable
-    @Suppress("UNUSED_PARAMETER")
-    private fun DUIComponent(
-        componentId: String,
-        args: Map<String, Any?>?,
-        componentDef: ComponentDefinition,
-        registry: DefaultVirtualWidgetRegistry,
-        resources: UIResources
-    ) {
-        // TODO: Implement full DUIComponent rendering
-        // This is a placeholder that should be replaced with the actual implementation
-        // including state management and action execution
-        Logger.log("Rendering component: $componentId")
-    }
+
 
     /**
      * Registers a custom widget builder.
