@@ -41,20 +41,19 @@ fun Modifier.applyCommonProps(
 ): Modifier {
     if (commonProps == null) return this
 
-    // Capture action executor and context at Composable scope level
     val actionExecutor = LocalActionExecutor.current
-    // Use applicationContext to prevent memory leaks - it lives for app lifetime
     val context = LocalContext.current.applicationContext
-    val re = LocalUIResources.current
+    val resources = LocalUIResources.current
+    val stateContext = LocalStateContextProvider.current
 
-    val stateContext= LocalStateContextProvider.current
     val style = commonProps.style
-
     var modifier = this
 
-
     if (style != null) {
+
+        val margin = ToUtils.edgeInsets(style.margin)
         val padding = ToUtils.edgeInsets(style.padding)
+
         val bgColor = style.bgColor
             ?.evaluate<String>(payload.scopeContext)
             ?.let { payload.color(it) }
@@ -72,51 +71,159 @@ fun Modifier.applyCommonProps(
             (border?.get("borderType") as? JsonLike)
                 ?.get("borderPattern") as? String
 
-        modifier = modifier.applyIf(padding!= PaddingValuesZero) {
-                padding(padding)
-            }
-            .applyIf(bgColor != null) {
-                background(bgColor!!, shape = borderRadius)
-            }
-            .applyIf(
-                borderPattern == "solid" &&
-                        borderWidth != null &&
-                        borderWidth > 0f
-            ) {
-                border(
-                    width = borderWidth?.dp?:0.dp,
-                    color = borderColor ?: Color.Black,
-                    shape = borderRadius
-                )
-            }
-            .applyIf(borderRadius!=RoundedCornerShape(0.dp)) {
-                clip(borderRadius)
-            }
-            .applySizing(style)
+        /* ------------------------------------------------------ */
+        /* 1️⃣ Margin (outer spacing)                               */
+        /* ------------------------------------------------------ */
+        modifier = modifier.applyIf(margin != PaddingValuesZero) {
+            padding(margin)
+        }
+
+        /* ------------------------------------------------------ */
+        /* 2️⃣ Size constraints                                   */
+        /* ------------------------------------------------------ */
+        modifier = modifier.applySizing(style)
+
+        /* ------------------------------------------------------ */
+        /* 3️⃣ Background                                         */
+        /* ------------------------------------------------------ */
+        if (bgColor != null) {
+            modifier = modifier.background(bgColor, borderRadius)
+        }
+
+        /* ------------------------------------------------------ */
+        /* 4️⃣ Border                                             */
+        /* ------------------------------------------------------ */
+        if (
+            borderPattern == "solid" &&
+            borderWidth != null &&
+            borderWidth > 0f
+        ) {
+            modifier = modifier.border(
+                width = borderWidth.dp,
+                color = borderColor ?: Color.Black,
+                shape = borderRadius
+            )
+        }
+
+        /* ------------------------------------------------------ */
+        /* 5️⃣ Clip (before click for ripple correctness)         */
+        /* ------------------------------------------------------ */
+        if (borderRadius != RoundedCornerShape(0.dp)) {
+            modifier = modifier.clip(borderRadius)
+        }
+
+        /* ------------------------------------------------------ */
+        /* 6️⃣ Inner padding                                      */
+        /* ------------------------------------------------------ */
+        modifier = modifier.applyIf(padding != PaddingValuesZero) {
+            padding(padding)
+        }
     }
 
-    // Gesture
+    /* ------------------------------------------------------ */
+    /* 7️⃣ Click / Gesture (after clip)                        */
+    /* ------------------------------------------------------ */
     val actionFlow = commonProps.onClick
     if (actionFlow != null && actionFlow.actions.isNotEmpty()) {
         modifier = modifier.clickable {
             payload.executeAction(
                 context = context,
                 actionFlow = actionFlow,
-                stateContext= stateContext,
-                resourceProvider = re,
+                stateContext = stateContext,
+                resourceProvider = resources,
                 actionExecutor = actionExecutor
             )
         }
     }
-    val padding = ToUtils.edgeInsets(style?.margin)
-    modifier = modifier.applyIf(padding!= PaddingValuesZero) {
-        padding(padding)
-    }
-
-
 
     return modifier
 }
+
+
+
+//@Composable
+//fun Modifier.applyCommonProps(
+//    payload: RenderPayload,
+//    commonProps: CommonProps?
+//): Modifier {
+//    if (commonProps == null) return this
+//
+//    // Capture action executor and context at Composable scope level
+//    val actionExecutor = LocalActionExecutor.current
+//    // Use applicationContext to prevent memory leaks - it lives for app lifetime
+//    val context = LocalContext.current.applicationContext
+//    val re = LocalUIResources.current
+//
+//    val stateContext= LocalStateContextProvider.current
+//    val style = commonProps.style
+//
+//    var modifier = this
+//
+//
+//    if (style != null) {
+//        val padding = ToUtils.edgeInsets(style.padding)
+//        val bgColor = style.bgColor
+//            ?.evaluate<String>(payload.scopeContext)
+//            ?.let { payload.color(it) }
+//
+//        val borderRadius = ToUtils.borderRadius(style.borderRadius)
+//        val border = style.border
+//
+//        val borderColor =
+//            payload.color(border?.get("borderColor") as? String ?: "")
+//
+//        val borderWidth =
+//            (border?.get("borderWidth") as? Number)?.toFloat()
+//
+//        val borderPattern =
+//            (border?.get("borderType") as? JsonLike)
+//                ?.get("borderPattern") as? String
+//
+//        modifier = modifier.applyIf(padding!= PaddingValuesZero) {
+//                padding(padding)
+//            }
+//            .applyIf(bgColor != null) {
+//                background(bgColor!!, shape = borderRadius)
+//            }
+//            .applyIf(
+//                borderPattern == "solid" &&
+//                        borderWidth != null &&
+//                        borderWidth > 0f
+//            ) {
+//                border(
+//                    width = borderWidth?.dp?:0.dp,
+//                    color = borderColor ?: Color.Black,
+//                    shape = borderRadius
+//                )
+//            }
+//            .applyIf(borderRadius!=RoundedCornerShape(0.dp)) {
+//                clip(borderRadius)
+//            }
+//            .applySizing(style)
+//    }
+//
+//    // Gesture
+//    val actionFlow = commonProps.onClick
+//    if (actionFlow != null && actionFlow.actions.isNotEmpty()) {
+//        modifier = modifier.clickable {
+//            payload.executeAction(
+//                context = context,
+//                actionFlow = actionFlow,
+//                stateContext= stateContext,
+//                resourceProvider = re,
+//                actionExecutor = actionExecutor
+//            )
+//        }
+//    }
+//    val padding = ToUtils.edgeInsets(style?.margin)
+//    modifier = modifier.applyIf(padding!= PaddingValuesZero) {
+//        padding(padding)
+//    }
+//
+//
+//
+//    return modifier
+//}
 
 
 

@@ -2,6 +2,7 @@ package com.digia.digiaui.framework.models
 
 import com.digia.digiaui.framework.expr.ScopeContext
 import com.digia.digiaui.framework.expression.evaluateExpression
+import com.digia.digiaui.framework.expression.evaluateNestedExpressions
 
 /**
  * Expression wrapper - can be either a literal value or an expression string
@@ -114,12 +115,13 @@ class ExprOr<T : Any> private constructor(
                 }
             }
 
+
             // TODO: Implement nested expression evaluation
             // For now, return the value as-is
-            return valueToEvaluate
+            return evaluateNestedExpressions(valueToEvaluate, scopeContext)
         } else {
             // TODO: Implement nested expression evaluation for non-expr values
-            return value
+            return evaluateNestedExpressions(value, scopeContext)
         }
     }
 

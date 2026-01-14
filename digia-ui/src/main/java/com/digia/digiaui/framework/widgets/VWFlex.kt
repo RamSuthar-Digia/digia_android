@@ -91,7 +91,10 @@ class VWFlex(
             buildStaticFlex(payload)
         }
 
-        wrapWithScrollViewIfNeeded { flexWidget }
+        flexWidget
+
+
+//        wrapWithScrollViewIfNeeded { flexWidget }
     }
 
     @Composable
@@ -136,7 +139,11 @@ class VWFlex(
         when (props.direction) {
             FlexDirection.VERTICAL -> {
                 Column(
-                    modifier = buildColumnModifier(payload),
+                    modifier = buildColumnModifier(payload).let {
+                        if (props.isScrollable == true)
+                            it.verticalScroll(rememberScrollState())
+                        else it
+                    },
                     verticalArrangement = toMainAxisAlignmentVertical(props.mainAxisAlignment),
                     horizontalAlignment = toHorizontalAlignment(props.crossAxisAlignment)
                 ) {
@@ -165,7 +172,11 @@ class VWFlex(
             }
             FlexDirection.HORIZONTAL -> {
                 Row(
-                    modifier = buildRowModifier(payload),
+                    modifier = buildRowModifier(payload).let {
+                        if (props.isScrollable == true)
+                            it.horizontalScroll(rememberScrollState())
+                        else it
+                    },
                     horizontalArrangement = toMainAxisAlignmentHorizontal(props.mainAxisAlignment),
                     verticalAlignment = toVerticalAlignment(props.crossAxisAlignment)
                 ) {
@@ -195,27 +206,6 @@ class VWFlex(
         }
     }
 
-//    @Composable
-//    private fun applyFlexFit(child: VirtualNode, payload: RenderPayload) {
-//        val parentProps = child.parentProps
-//        val flexFit = parentProps?.getString("flexFit")
-//        val flexValue = parentProps?.getDouble("flex") ?: 1.0
-//
-//        if (flexFit != null) {
-//            val fillMaxSize = when (flexFit.lowercase()) {
-//                "tight", "expanded" -> true
-//                "loose", "flexible" -> false
-//                else -> true
-//            }
-//
-//            // This works because we're inside RowScope or ColumnScope
-//            Box(modifier = Modifier.weight(flexValue.toFloat(), fill = fillMaxSize)) {
-//                child.ToWidget(payload)
-//            }
-//        } else {
-//            child.ToWidget(payload)
-//        }
-//    }
 
     @Composable
     private fun wrapWithScrollViewIfNeeded(content: @Composable () -> Unit) {
@@ -224,11 +214,11 @@ class VWFlex(
         if (isScrollable) {
             val scrollState = rememberScrollState()
             if (props.direction == FlexDirection.VERTICAL) {
-                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                Column(modifier = Modifier.fillMaxHeight().verticalScroll(scrollState)) {
                     content()
                 }
             } else {
-                Row(modifier = Modifier.horizontalScroll(scrollState)) {
+                Row(modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState)) {
                     content()
                 }
             }
