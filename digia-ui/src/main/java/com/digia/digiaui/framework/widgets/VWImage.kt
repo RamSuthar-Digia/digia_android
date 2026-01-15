@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
@@ -176,30 +177,63 @@ private fun RenderNetworkImage(
             .build()
     }
 
-    SubcomposeAsyncImage(
-        model = imageRequest,
-        imageLoader = imageLoader,
-        contentDescription = null,
-        modifier = modifier.fillMaxSize(),
-        contentScale = contentScale,
-        alignment = alignment,
-        colorFilter = if (isSvg && svgColor != null) ColorFilter.tint(svgColor) else null,
-        loading = {
-            if (blurHashBitmap != null) {
-                Image(
-                    bitmap = blurHashBitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = contentScale,
-                    alignment = alignment
-                )
-            } else {
-                RenderLoading()
-            }
-        },
-        error = { RenderError("Failed to load image", Modifier.fillMaxSize()) },
-        success = { SubcomposeAsyncImageContent() }
-    )
+    // For BoxFit.none/scaleDown, the image should wrap to its intrinsic size (like Flutter)
+    // For other fit modes, fill the available space
+    val needsWrapContent = props.fit == "none" || props.fit == "scaleDown"
+    
+    if (needsWrapContent) {
+        // Match Flutter behavior: widget wraps to image's intrinsic size
+        // No fillMaxSize() - let the image determine the widget size
+        SubcomposeAsyncImage(
+            model = imageRequest,
+            imageLoader = imageLoader,
+            contentDescription = null,
+            modifier = modifier.clipToBounds(),
+            contentScale = contentScale,
+            alignment = alignment,
+            colorFilter = if (isSvg && svgColor != null) ColorFilter.tint(svgColor) else null,
+            loading = {
+                if (blurHashBitmap != null) {
+                    Image(
+                        bitmap = blurHashBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = contentScale,
+                        alignment = alignment
+                    )
+                } else {
+                    RenderLoading()
+                }
+            },
+            error = { RenderError("Failed to load image", Modifier) },
+            success = { SubcomposeAsyncImageContent() }
+        )
+    } else {
+        // For cover, contain, fill, etc. - fill the available space
+        SubcomposeAsyncImage(
+            model = imageRequest,
+            imageLoader = imageLoader,
+            contentDescription = null,
+            modifier = modifier.fillMaxSize(),
+            contentScale = contentScale,
+            alignment = alignment,
+            colorFilter = if (isSvg && svgColor != null) ColorFilter.tint(svgColor) else null,
+            loading = {
+                if (blurHashBitmap != null) {
+                    Image(
+                        bitmap = blurHashBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = contentScale,
+                        alignment = alignment
+                    )
+                } else {
+                    RenderLoading()
+                }
+            },
+            error = { RenderError("Failed to load image", Modifier.fillMaxSize()) },
+            success = { SubcomposeAsyncImageContent() }
+        )
+    }
 }
 
 @Composable
@@ -234,13 +268,29 @@ private fun RenderAssetPlaceholder(assetPath: String, modifier: Modifier) {
 
 @Composable
 private fun RenderPreloadedImage(image: ImageBitmap, modifier: Modifier, props: ImageProps) {
-    Image(
-        bitmap = image,
-        contentDescription = null,
-        modifier = modifier.fillMaxSize(),
-        contentScale = props.fit.toContentScale(),
-        alignment = props.alignment.toAlignment()
-    )
+    val contentScale = props.fit.toContentScale()
+    val alignment = props.alignment.toAlignment()
+    val needsWrapContent = props.fit == "none" || props.fit == "scaleDown"
+    
+    if (needsWrapContent) {
+        // Match Flutter behavior: widget wraps to image's intrinsic size
+        Image(
+            bitmap = image,
+            contentDescription = null,
+            modifier = modifier.clipToBounds(),
+            contentScale = contentScale,
+            alignment = alignment
+        )
+    } else {
+        // For cover, contain, fill, etc. - fill the available space
+        Image(
+            bitmap = image,
+            contentDescription = null,
+            modifier = modifier.fillMaxSize(),
+            contentScale = contentScale,
+            alignment = alignment
+        )
+    }
 }
 
 // ============== Extensions ==============
