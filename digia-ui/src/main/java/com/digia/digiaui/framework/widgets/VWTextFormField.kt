@@ -520,7 +520,7 @@ fun textFormFieldBuilder(
         refName = data.refName,
         commonProps = data.commonProps,
         parent = parent,
-        parentProps = data.props,
+        parentProps = data.parentProps,
         props = TextFormFieldProps.fromJson(data.props.value),
         slots = childrenData
     )

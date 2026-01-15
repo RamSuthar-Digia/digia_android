@@ -49,11 +49,20 @@ data class VWNodeData(
             return VWNodeData(
                     refName = tryKeys<String>(json, listOf("varName", "refName")),
                     type = json["type"] as? String ?: "",
-                    props  = (json["props"] as? JsonLike)?.let(::Props) ?: Props.empty(),
+                    props  = run {
+                        val propsMap = (json["props"] as? JsonLike) ?: emptyMap()
+                        val propDataMap = (json["propData"] as? JsonLike) ?: emptyMap()
+                        val defaultPropsMap = (json["defaultPropData"] as? JsonLike) ?: emptyMap()
+                        // Merge order: defaults < propData < props (overrides)
+                        Props(defaultPropsMap + propDataMap + propsMap)
+                    },
                     commonProps  = (json["containerProps"] as? JsonLike)?.let {
                         CommonProps.fromJson(it)
                     },
-                    parentProps  = (json["parentProps"] as? JsonLike)?.let(::Props) ?: Props.empty(),
+                    // Dashboard exports as "parentPropData", try both keys for compatibility
+                    parentProps  = (json["parentPropData"] as? JsonLike)?.let(::Props) 
+                        ?: (json["parentProps"] as? JsonLike)?.let(::Props) 
+                        ?: Props.empty(),
                 childGroups = tryKeys(json, listOf("childGroups", "children"), VWNodeData::parseChildGroups),
             )
         }
