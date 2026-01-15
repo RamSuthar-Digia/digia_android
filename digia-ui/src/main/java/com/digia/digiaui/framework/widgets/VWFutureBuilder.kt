@@ -2,6 +2,7 @@ package com.digia.digiaui.framework.widgets
 
 import LocalUIResources
 import android.content.Context
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,6 +38,7 @@ import resourceApiModel
 
 
 import androidx.compose.runtime.*
+import com.digia.digiaui.framework.registerAllChildern
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.CoroutineContext
@@ -163,14 +165,14 @@ class VWAsyncBuilder(
     commonProps: CommonProps?,
     parentProps: Props?,
     parent: VirtualNode?,
-    childGroups: Map<String, List<VirtualNode>>,
+    slots: ((VirtualCompositeNode<AsyncBuilderProps>) -> Map<String, List<VirtualNode>>?)? = null,
     refName: String? = null
 ) : VirtualCompositeNode<AsyncBuilderProps>(
     props = props,
     commonProps = commonProps,
     parentProps = parentProps,
     parent = parent,
-    slots = childGroups,
+    _slots = slots,
     refName = refName
 ) {
 
@@ -181,11 +183,9 @@ class VWAsyncBuilder(
         val actionExecutor = LocalActionExecutor.current
         val resourceProvider = LocalUIResources.current
 
-        // Use provided controller or create new one
         val controller =
             payload.evalExpr<AsyncController<Any?>>(props.controller)
-                ?: AsyncController<Any?>()
-
+                ?: remember { AsyncController<Any?>() }
 
         controller.setFutureCreator {
             makeFuture(
@@ -198,53 +198,15 @@ class VWAsyncBuilder(
             )
         }
 
-        // Wrap with Compose AsyncBuilder
+        // 👇 gate to control UI rendering
         AsyncBuilder(
             controller = controller,
             initialData = payload.evalExpr(props.initialData)
         ) { asyncState ->
 
-            // Handle side-effects OUTSIDE AsyncBuilder
-            LaunchedEffect(asyncState) {
-                when (asyncState) {
-                    is AsyncState.Success -> {
-                       props.onSuccess.let {
-                            payload.executeAction(
-                                context,
-                                 props.onSuccess,
-                                actionExecutor,
-                                stateContext,
-                                resourceProvider,
-                                incomingScopeContext = DefaultScopeContext(
-                                    variables = mapOf("response" to asyncState.data)
-                                ),
-                            )
-                       }
-                    }
-
-                    is AsyncState.Error -> {
-                        payload.executeAction(
-                            context,
-                            props.onError,
-                            actionExecutor,
-                            stateContext,
-                            resourceProvider,
-                            incomingScopeContext = DefaultScopeContext(
-                                variables = mapOf(
-                                    "response" to mapOf(
-                                        "error" to asyncState.throwable.message
-                                    )
-                                )
-                            ),
-                        )
-                    }
-
-                    else -> Unit
-                }
-            }
-
+            // ✅ gate to block UI until actions complete
+            var readyToShow by remember { mutableStateOf(false) }
             val futureType = getFutureType(props, payload)
-
             val updatedPayload = payload.copyWithChainedContext(
                 createExprContext(asyncState, futureType, refName)
             )
@@ -472,11 +434,6 @@ fun futureBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { childData ->
-            registry.createWidget(childData, parent)
-        }
-    }
 
     return VWAsyncBuilder(
         refName = data.refName,
@@ -484,6 +441,9 @@ fun futureBuilder(
         parent = parent,
         parentProps = data.parentProps ?: Props.empty(),
         props = AsyncBuilderProps.fromJson(data.props.value),
-        childGroups = childrenData ?: emptyMap()
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 }

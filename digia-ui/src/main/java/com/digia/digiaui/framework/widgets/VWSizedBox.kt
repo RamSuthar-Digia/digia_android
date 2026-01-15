@@ -1,10 +1,17 @@
 package com.digia.digiaui.framework.widgets
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.digia.digiaui.framework.RenderPayload
@@ -34,7 +41,6 @@ class SizedBoxProps(
     }
 }
 
-
 class VWSizedBox(
     refName: String?,
     commonProps: CommonProps?,
@@ -51,26 +57,20 @@ class VWSizedBox(
 
     @Composable
     override fun Render(payload: RenderPayload) {
-        // 1. Start with an initial modifier (ideally passed in, or empty)
-        var modifier: Modifier = Modifier
 
-        // 2. Reassign the result of the modifier chain
-        props.width?.let { width ->
-            modifier = modifier.then(Modifier.width(width.toDp()))
-        }
-        props.height?.let { height ->
-            modifier = modifier.then(Modifier.height(height.toDp()))
-        }
+        val widthDp = props.width?.toDp()
+        val heightDp = props.height?.toDp()
 
-        Box(
-            modifier = modifier,
-            content = {}
-        )
+
+        Layout(content = {}) { _, _ ->
+            layout(widthDp?.roundToPx() ?: 0, heightDp?.roundToPx() ?: 0) {}
+        }
     }
 
-    // Helper extension function to convert to dp
+
     private fun Number.toDp(): Dp = this.toFloat().dp
 }
+
 
 
 fun sizedBoxBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRegistry): VirtualNode {
@@ -80,5 +80,21 @@ fun sizedBoxBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWid
         parent = parent,
         parentProps = data.parentProps,
         props = SizedBoxProps.fromJson(data.props.value)
+    )
+}
+
+
+@Composable
+fun FixedSpace(
+    width: Dp? = null,
+    height: Dp? = null
+) {
+    Box(
+        modifier = Modifier.layout { measurable, constraints ->
+            val w = width?.roundToPx() ?: 0
+            val h = height?.roundToPx() ?: 0
+
+            layout(w, h) {}
+        }
     )
 }

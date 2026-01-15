@@ -10,6 +10,7 @@ import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.ExprOr
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 
 
@@ -32,7 +33,7 @@ class VWConditionItem(
     commonProps: CommonProps? = null,
     props: ConditionalItemProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<ConditionalItemProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<ConditionalItemProps>(
 props = props,
@@ -40,7 +41,7 @@ commonProps = commonProps,
 parentProps= parentProps,
 parent = parent,
 refName = refName,
-slots = slots
+_slots = slots
 ) {
 
     fun evaluate(scopeContext: ScopeContext?): Boolean {
@@ -69,7 +70,10 @@ fun conditionalItemBuilder(data: VWNodeData, parent: VirtualNode?,registry: Virt
         parent= parent,
         parentProps = data.parentProps,
         props = ConditionalItemProps.fromJson(data.props.value),
-        slots = childrenData
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 
 }

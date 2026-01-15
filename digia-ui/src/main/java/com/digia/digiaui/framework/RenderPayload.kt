@@ -140,7 +140,7 @@ stateContext?.startTracking()
         if (incoming == null) return scopeContext
         if (scopeContext == null) return incoming
 
-        incoming.enclosing = scopeContext
+         incoming.addContextAtTail(scopeContext)
         return incoming
     }
 

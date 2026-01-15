@@ -37,7 +37,7 @@ class VWStateContainer(
         // Resolve initial state values by evaluating expressions/defaults
         val resolvedState = initStateDefs.mapValues { (_, variable) ->
             // Try to evaluate default value as expression, fallback to literal value
-            variable.defaultValue
+         payload.eval<Any>(variable.defaultValue)
         }
 
         // Create stateful scope widget that provides state context
@@ -45,10 +45,7 @@ class VWStateContainer(
             namespace = refName,
             initialState = resolvedState,
         ) { stateContext ->
-            val version = stateContext.Version()
-            key(version) {
-                child.ToWidget(payload.copyWithChainedContext(_createExprContext(stateContext = stateContext)))
-            }
+                 child.ToWidget(payload.copyWithChainedContext(_createExprContext(stateContext = stateContext)))
         }
 
     }

@@ -16,6 +16,7 @@ import com.digia.digiaui.framework.base.VirtualNode
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 
 /**
@@ -93,7 +94,7 @@ class VWStack(
     commonProps: CommonProps? = null,
     props: StackProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<StackProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<StackProps>(
     props = props,
@@ -101,7 +102,7 @@ class VWStack(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     @Composable
@@ -265,16 +266,15 @@ fun stackBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { childData ->
-            registry.createWidget(childData, parent)
-        }
-    }
+
     return VWStack(
         refName = data.refName,
         commonProps = data.commonProps,
         props = StackProps.fromJson(data.props.value),
-        slots = childrenData,
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
         parent = parent,
         parentProps = data.parentProps
     )

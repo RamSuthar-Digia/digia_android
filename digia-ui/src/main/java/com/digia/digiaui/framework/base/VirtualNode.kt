@@ -19,7 +19,7 @@ abstract class VirtualNode(
     private val parentRef: WeakReference<VirtualNode>? =
         parent?.let { WeakReference(it) }
 
-    val parent: VirtualNode?
+    var parent: VirtualNode? = null
         get() = parentRef?.get()
 
     /** Render widget */

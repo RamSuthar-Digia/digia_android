@@ -3,6 +3,7 @@ package com.digia.digiaui.framework.models
 import com.digia.digiaui.framework.expr.ScopeContext
 import com.digia.digiaui.framework.expression.evaluateExpression
 import com.digia.digiaui.framework.expression.evaluateNestedExpressions
+import com.digia.digiaui.framework.utils.to
 
 /**
  * Expression wrapper - can be either a literal value or an expression string
@@ -89,7 +90,7 @@ class ExprOr<T : Any> private constructor(
                  return evaluateExpression<R>(expressionString, scopeContext)
              } else {
                  // If it's not an expression, use decoder or cast it to R
-                 return decoder?.invoke(value) ?: (value as? R)
+                 return decoder?.invoke(value) ?: value.to<R>()
              }
          } catch (e: Exception) {
              e.printStackTrace()

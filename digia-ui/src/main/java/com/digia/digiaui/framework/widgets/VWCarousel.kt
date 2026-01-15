@@ -35,6 +35,7 @@ import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.ExprOr
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.state.LocalStateContextProvider
 import com.digia.digiaui.framework.utils.JsonLike
 import com.digia.digiaui.framework.utils.NumUtil
@@ -119,7 +120,7 @@ class VWCarousel(
     commonProps: CommonProps? = null,
     props: CarouselProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<CarouselProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<CarouselProps>(
     props = props,
@@ -127,7 +128,7 @@ class VWCarousel(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     private val shouldRepeatChild: Boolean
@@ -460,6 +461,9 @@ fun carouselBuilder(
         parent = parent,
         parentProps = data.parentProps,
         props = CarouselProps.fromJson(data.props.value),
-        slots = childGroups
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 }

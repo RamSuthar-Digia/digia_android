@@ -17,6 +17,7 @@ import com.digia.digiaui.framework.expr.DefaultScopeContext
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 
 /**
@@ -74,7 +75,7 @@ class VWWrap(
     commonProps: CommonProps? = null,
     props: WrapProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<WrapProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<WrapProps>(
     props = props,
@@ -82,7 +83,7 @@ class VWWrap(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     private val shouldRepeatChild: Boolean
@@ -212,17 +213,17 @@ fun wrapBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { childData ->
-            registry.createWidget(childData, parent)
-        }
-    }
+
     return VWWrap(
         refName = data.refName,
         commonProps = data.commonProps,
         props = WrapProps.fromJson(data.props.value),
-        slots = childrenData,
+        slots = {
+            self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
         parent = parent,
         parentProps = data.parentProps
     )
 }
+

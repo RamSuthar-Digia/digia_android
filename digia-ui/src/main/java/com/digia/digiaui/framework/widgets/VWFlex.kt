@@ -16,6 +16,7 @@ import com.digia.digiaui.framework.expr.DefaultScopeContext
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 
 /**
@@ -64,7 +65,7 @@ class VWFlex(
     commonProps: CommonProps? = null,
     props: FlexProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<FlexProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<FlexProps>(
     props = props,
@@ -72,7 +73,7 @@ class VWFlex(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     private val shouldRepeatChild: Boolean
@@ -105,7 +106,12 @@ class VWFlex(
         when (props.direction) {
             FlexDirection.VERTICAL -> {
                 Column(
-                    modifier = buildColumnModifier(payload),
+                    modifier = buildColumnModifier(payload) .applyMainAxisSize()
+                        .let {
+                            if (props.isScrollable == true)
+                                it.verticalScroll(rememberScrollState())
+                            else it
+                        },
                     verticalArrangement = toMainAxisAlignmentVertical(props.mainAxisAlignment),
                     horizontalAlignment = toHorizontalAlignment(props.crossAxisAlignment)
                 ) {
@@ -119,7 +125,12 @@ class VWFlex(
             }
             FlexDirection.HORIZONTAL -> {
                 Row(
-                    modifier = buildRowModifier(payload),
+                    modifier = buildRowModifier(payload) .applyMainAxisSize()
+                        .let {
+                            if (props.isScrollable == true)
+                                it.verticalScroll(rememberScrollState())
+                            else it
+                        },
                     horizontalArrangement = toMainAxisAlignmentHorizontal(props.mainAxisAlignment),
                     verticalAlignment = toVerticalAlignment(props.crossAxisAlignment)
                 ) {
@@ -139,7 +150,9 @@ class VWFlex(
         when (props.direction) {
             FlexDirection.VERTICAL -> {
                 Column(
-                    modifier = buildColumnModifier(payload).let {
+                    modifier = buildColumnModifier(payload)
+                        .applyMainAxisSize()
+                        .let {
                         if (props.isScrollable == true)
                             it.verticalScroll(rememberScrollState())
                         else it
@@ -172,7 +185,9 @@ class VWFlex(
             }
             FlexDirection.HORIZONTAL -> {
                 Row(
-                    modifier = buildRowModifier(payload).let {
+                    modifier = buildRowModifier(payload)
+                        .applyMainAxisSize()
+                        .let {
                         if (props.isScrollable == true)
                             it.horizontalScroll(rememberScrollState())
                         else it
@@ -208,26 +223,6 @@ class VWFlex(
 
 
     @Composable
-    private fun wrapWithScrollViewIfNeeded(content: @Composable () -> Unit) {
-        val isScrollable = props.isScrollable ?: false
-
-        if (isScrollable) {
-            val scrollState = rememberScrollState()
-            if (props.direction == FlexDirection.VERTICAL) {
-                Column(modifier = Modifier.fillMaxHeight().verticalScroll(scrollState)) {
-                    content()
-                }
-            } else {
-                Row(modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState)) {
-                    content()
-                }
-            }
-        } else {
-            content()
-        }
-    }
-
-    @Composable
     private fun buildColumnModifier(payload: RenderPayload): Modifier {
         val startSpacing = (props.startSpacing ?: 0.0).dp
         val endSpacing = (props.endSpacing ?: 0.0).dp
@@ -236,6 +231,29 @@ class VWFlex(
             .buildModifier(payload)
     }
 
+    private fun Modifier.applyMainAxisSize(): Modifier {
+        val isFlexChild = parentProps?.getString("flexFit") != null ||
+                parentProps?.getString("expansion.type") != null
+
+        return when (props.mainAxisSize?.lowercase()) {
+            "max" -> {
+                when {
+                    // If this Flex is expanded, weight already controls size
+                    isFlexChild -> this
+
+                    // If parent is same-axis Flex → behave like Flutter (wrap)
+                    isSameAxisParentFlex(parent,props) -> this
+
+                    // Otherwise safe to fill
+                    props.direction == FlexDirection.VERTICAL -> this.fillMaxHeight()
+                    props.direction == FlexDirection.HORIZONTAL -> this.fillMaxWidth()
+                    else -> this
+                }
+            }
+            "min" -> this
+            else -> this
+        }
+    }
     @Composable
     private fun buildRowModifier(payload: RenderPayload): Modifier {
         val startSpacing = (props.startSpacing ?: 0.0).dp
@@ -307,35 +325,20 @@ class VWFlex(
 }
 
 /** Builder function for Column widget */
-fun columnBuilder(data: VWNodeData,parent: VirtualNode?, registry:VirtualWidgetRegistry): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { data ->
-            registry.createWidget(data, parent)
-        }
-    }
+fun columnBuilder(
+    data: VWNodeData,
+    parent: VirtualNode?,
+    registry: VirtualWidgetRegistry
+): VirtualNode {
+
     return VWFlex(
         refName = data.refName,
         commonProps = data.commonProps,
-        props = FlexProps.fromJson(data.props.value, FlexDirection.VERTICAL),
-        slots = childrenData,
-        parent= parent,
-        parentProps =  data.parentProps,
-
-    )
-}
-
-/** Builder function for Row widget */
-fun rowBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRegistry): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { data ->
-            registry.createWidget(data, parent)
-        }
-    }
-    return VWFlex(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        props = FlexProps.fromJson(data.props.value , FlexDirection.HORIZONTAL),
-        slots = childrenData,
+        props = FlexProps.fromJson(data.props.value , FlexDirection.VERTICAL),
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
         parent= parent,
         parentProps = data.parentProps
 
@@ -343,3 +346,27 @@ fun rowBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRe
 }
 
 
+/** Builder function for Row widget */
+fun rowBuilder(data: VWNodeData, parent: VirtualNode?, registry: VirtualWidgetRegistry): VirtualNode {
+
+    return VWFlex(
+        refName = data.refName,
+        commonProps = data.commonProps,
+        props = FlexProps.fromJson(data.props.value , FlexDirection.HORIZONTAL),
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
+        parent= parent,
+        parentProps = data.parentProps
+
+    )
+}
+
+
+
+
+private fun isSameAxisParentFlex(parent: VirtualNode?, props: FlexProps): Boolean {
+    val parentFlex = parent as? VWFlex ?: return false
+    return parentFlex.props.direction == props.direction
+}

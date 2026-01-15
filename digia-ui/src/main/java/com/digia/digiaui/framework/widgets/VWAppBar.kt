@@ -23,6 +23,7 @@ import com.digia.digiaui.framework.utils.JsonLike
 import androidx.compose.ui.platform.LocalContext
 import LocalUIResources
 import com.digia.digiaui.framework.evalColor
+import com.digia.digiaui.framework.registerAllChildern
 
 /**
  * AppBar widget properties
@@ -76,7 +77,7 @@ class VWAppBar(
     commonProps: CommonProps? = null,
     props: AppBarProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<AppBarProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<AppBarProps>(
     props = props,
@@ -84,7 +85,7 @@ class VWAppBar(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -217,6 +218,9 @@ fun appBarBuilder(
         parent = parent,
         parentProps = data.parentProps,
         props = AppBarProps.fromJson(data.props.value),
-        slots = childrenData
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 }

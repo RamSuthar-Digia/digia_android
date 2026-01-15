@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -180,7 +179,7 @@ private fun RenderNetworkImage(
         model = imageRequest,
         imageLoader = imageLoader,
         contentDescription = null,
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         contentScale = contentScale,
         alignment = alignment,
         colorFilter = if (isSvg && svgColor != null) ColorFilter.tint(svgColor) else null,
@@ -189,7 +188,7 @@ private fun RenderNetworkImage(
                 Image(
                     bitmap = blurHashBitmap.asImageBitmap(),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier,
                     contentScale = contentScale,
                     alignment = alignment
                 )
@@ -197,14 +196,14 @@ private fun RenderNetworkImage(
                 RenderLoading()
             }
         },
-        error = { RenderError("Failed to load image", Modifier.fillMaxSize()) },
+        error = { RenderError("Failed to load image", Modifier) },
         success = { SubcomposeAsyncImageContent() }
     )
 }
 
 @Composable
 private fun RenderEmpty(modifier: Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (DigiaUIManager.getInstance().host != null) {
             Text("No image source", color = Color.Gray)
         }
@@ -213,21 +212,21 @@ private fun RenderEmpty(modifier: Modifier) {
 
 @Composable
 private fun RenderLoading() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier, contentAlignment = Alignment.Center) {
         Text("Loading...", color = Color.Gray)
     }
 }
 
 @Composable
 private fun RenderError(message: String, modifier: Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text(message, color = Color.Red)
     }
 }
 
 @Composable
 private fun RenderAssetPlaceholder(assetPath: String, modifier: Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text("Asset: $assetPath\n(Not available)", color = Color.Gray)
     }
 }
@@ -237,7 +236,7 @@ private fun RenderPreloadedImage(image: ImageBitmap, modifier: Modifier, props: 
     Image(
         bitmap = image,
         contentDescription = null,
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         contentScale = props.fit.toContentScale(),
         alignment = props.alignment.toAlignment()
     )
@@ -252,6 +251,7 @@ private fun String.toContentScale(): ContentScale = when (this) {
     "fitHeight" -> ContentScale.FillHeight
     "none" -> ContentScale.None
     "scaleDown" -> ContentScale.Inside
+    "contain"-> ContentScale.Inside
     else -> ContentScale.Fit
 }
 

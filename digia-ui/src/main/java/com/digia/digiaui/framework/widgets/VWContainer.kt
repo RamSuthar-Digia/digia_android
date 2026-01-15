@@ -42,6 +42,7 @@ import com.digia.digiaui.framework.evalColor
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.state.LocalStateContextProvider
 import com.digia.digiaui.framework.utils.JsonLike
 import com.digia.digiaui.framework.utils.NumUtil
@@ -58,7 +59,7 @@ class VWContainer(
     commonProps: CommonProps? = null,
     private val containerProps: ContainerProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<ContainerProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<ContainerProps>(
     props = containerProps,
@@ -66,57 +67,263 @@ class VWContainer(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
+
+//    @Composable
+//    override fun Render(payload: RenderPayload) {
+//        val context = LocalContext.current.applicationContext
+//        val actionExecutor = LocalActionExecutor.current
+//        val stateContext = LocalStateContextProvider.current
+//        val resources = LocalUIResources.current
+//
+//        val isCircle = containerProps.shape == "circle"
+//        val borderRadius = ToUtils.borderRadius(containerProps.borderRadius)
+//        val shape: Shape = if (isCircle) CircleShape else borderRadius
+//
+//        val gradient = containerProps.gradient?.toBrush(payload)
+//        val elevation = (containerProps.elevation ?: 0.0).dp
+//        val alignment = containerProps.childAlignment.toAlignment()
+//        val bgColor = payload.evalColor(containerProps.color)
+//
+//        // Build modifier
+//        var modifier = Modifier.buildModifier(payload)
+//
+//        // Apply margin (outer spacing)
+//        modifier = modifier.padding(ToUtils.edgeInsets(containerProps.margin))
+//
+//        // Apply shadow/elevation first (before clipping)
+//        if (elevation > 0.dp) {
+//            modifier = modifier.shadow(
+//                elevation = elevation,
+//                shape = shape,
+//                ambientColor = Color.Black.copy(alpha = 0.1f),
+//                spotColor = Color.Black.copy(alpha = 0.2f)
+//            )
+//        }
+//
+//        // Apply custom shadows
+//        containerProps.shadow?.let { shadows ->
+//            modifier = modifier.drawBehind {
+//                shadows.forEach { shadowProps ->
+//                    val shadowColor = Color.Black
+//                    val offsetX = (shadowProps.offsetX ?: 0.0).dp.toPx()
+//                    val offsetY = (shadowProps.offsetY ?: 0.0).dp.toPx()
+//
+//                    drawRect(
+//                        color = shadowColor.copy(alpha = 0.3f),
+//                        topLeft = Offset(offsetX, offsetY),
+//                        size = size
+//                    )
+//                }
+//            }
+//        }
+//
+//        // Handle width with percentage
+//        containerProps.width?.let { widthValue ->
+//            val widthPercent = widthValue.toPercentFraction()
+//            if (widthPercent != null) {
+//                // Apply percentage width using fillMaxWidth with fraction
+//                modifier = modifier.fillMaxWidth(widthPercent)
+//            } else {
+//                // Apply fixed width
+//                widthValue.toDp()?.let { dpValue ->
+//                    modifier = modifier.width(dpValue)
+//                }
+//            }
+//        }
+//
+//        // Handle height with percentage
+//        containerProps.height?.let { heightValue ->
+//            val heightPercent = heightValue.toPercentFraction()
+//            if (heightPercent != null) {
+//                // Apply percentage height using fillMaxHeight with fraction
+//                modifier = modifier.fillMaxHeight(heightPercent)
+//            } else {
+//                // Apply fixed height
+//                heightValue.toDp()?.let { dpValue ->
+//                    modifier = modifier.height(dpValue)
+//                }
+//            }
+//        }
+//
+//        // Handle minimum width with percentage
+//        containerProps.minWidth?.let { minWidthValue ->
+//            val minWidthPercent = minWidthValue.toPercentFraction()
+//            if (minWidthPercent != null) {
+//                // Apply percentage minimum width
+//                modifier = modifier.fillMinWidth(minWidthPercent)
+//            } else {
+//                // Apply fixed minimum width
+//                minWidthValue.toDp()?.let { dpValue ->
+//                    modifier = modifier.widthIn(min = dpValue)
+//                }
+//            }
+//        }
+//
+//        // Handle minimum height with percentage
+//        containerProps.minHeight?.let { minHeightValue ->
+//            val minHeightPercent = minHeightValue.toPercentFraction()
+//            if (minHeightPercent != null) {
+//                // Apply percentage minimum height
+//                modifier = modifier.fillMinHeight(minHeightPercent)
+//            } else {
+//                // Apply fixed minimum height
+//                minHeightValue.toDp()?.let { dpValue ->
+//                    modifier = modifier.heightIn(min = dpValue)
+//                }
+//            }
+//        }
+//
+//        // Handle maximum width with percentage
+//        containerProps.maxWidth?.let { maxWidthValue ->
+//            val maxWidthPercent = maxWidthValue.toPercentFraction()
+//            if (maxWidthPercent != null) {
+//                // Apply percentage maximum width (clamp to percentage)
+//                modifier = modifier.fillMaxWidth(maxWidthPercent)
+//            } else {
+//                // Apply fixed maximum width
+//                maxWidthValue.toDp()?.let { dpValue ->
+//                    modifier = modifier.widthIn(max = dpValue)
+//                }
+//            }
+//        }
+//
+//        // Handle maximum height with percentage
+//        containerProps.maxHeight?.let { maxHeightValue ->
+//            val maxHeightPercent = maxHeightValue.toPercentFraction()
+//            if (maxHeightPercent != null) {
+//                // Apply percentage maximum height (clamp to percentage)
+//                modifier = modifier.fillMaxHeight(maxHeightPercent)
+//            } else {
+//                // Apply fixed maximum height
+//                maxHeightValue.toDp()?.let { dpValue ->
+//                    modifier = modifier.heightIn(max = dpValue)
+//                }
+//            }
+//        }
+//
+//        // Apply background (gradient or color)
+//        modifier = when {
+//            gradient != null -> modifier.background(brush = gradient, shape = shape)
+//            bgColor != null -> modifier.background(color = bgColor, shape = shape)
+//            else -> modifier
+//        }
+//
+//        // Apply decoration image
+//        containerProps.decorationImage?.let { decorationImage ->
+//            val imageSource = decorationImage.source
+//            if (!imageSource.isNullOrEmpty() && imageSource.contains("http")) {
+//                val painter = rememberAsyncImagePainter(
+//                    model = ImageRequest.Builder(LocalContext.current)
+//                        .data(imageSource)
+//                        .crossfade(true)
+//                        .build()
+//                )
+//                val contentScale = decorationImage.fit.toContentScale()
+//                val imageAlignment = decorationImage.alignment.toAlignment()
+//                val alpha = (decorationImage.opacity ?: 1.0).toFloat()
+//
+//                modifier = modifier.paint(
+//                    painter = painter,
+//                    contentScale = contentScale,
+//                    alignment = imageAlignment,
+//                    alpha = alpha
+//                )
+//            }
+//        }
+//
+//        // Apply border
+//        val border = containerProps.border
+//        val borderWidth = (border?.borderWidth ?: 0.0).dp
+//        val borderColor = payload.evalColor(border?.borderColor) ?: Color.Transparent
+//        if (borderWidth > 0.dp) {
+//            modifier = modifier.border(
+//                width = borderWidth,
+//                color = borderColor,
+//                shape = shape
+//            )
+//        }
+//
+//        // Clip content to shape
+//        modifier = modifier.clip(shape)
+//
+//        // Apply padding (inner spacing)
+//        modifier = modifier.padding(ToUtils.edgeInsets(containerProps.padding))
+//
+//        // Apply onClick gesture
+//        commonProps?.onClick?.let { actionFlow ->
+//            if (actionFlow.actions.isNotEmpty()) {
+//                modifier = modifier.clickable {
+//                    payload.executeAction(
+//                        context = context,
+//                        actionFlow = actionFlow,
+//                        stateContext = stateContext,
+//                        resourceProvider = resources,
+//                        actionExecutor = actionExecutor
+//                    )
+//                }
+//            }
+//        }
+//
+//        // Render the container
+//        if (elevation > 0.dp && (bgColor != null || gradient != null)) {
+//            // Use Surface for Material elevation effect
+//            Surface(
+//                modifier = modifier,
+//                shape = shape,
+//                color = bgColor ?: Color.Transparent,
+//                shadowElevation = elevation
+//            ) {
+//                Box(contentAlignment = alignment) {
+//                    child?.ToWidget(payload)
+//                }
+//            }
+//        } else {
+//            // Use Box for simple container
+//            Box(modifier = modifier, contentAlignment = alignment) {
+//                child?.ToWidget(payload)
+//            }
+//        }
+//    }
 
     @Composable
     override fun Render(payload: RenderPayload) {
+
+        /* ───────── Context ───────── */
+
         val context = LocalContext.current.applicationContext
         val actionExecutor = LocalActionExecutor.current
         val stateContext = LocalStateContextProvider.current
         val resources = LocalUIResources.current
 
+        /* ───────── Shape ───────── */
+
         val isCircle = containerProps.shape == "circle"
         val borderRadius = ToUtils.borderRadius(containerProps.borderRadius)
         val shape: Shape = if (isCircle) CircleShape else borderRadius
+
+        /* ───────── Visual props ───────── */
 
         val gradient = containerProps.gradient?.toBrush(payload)
         val elevation = (containerProps.elevation ?: 0.0).dp
         val alignment = containerProps.childAlignment.toAlignment()
         val bgColor = payload.evalColor(containerProps.color)
 
-        // Build modifier
+        /* ───────── Modifier base ───────── */
+
         var modifier = Modifier.buildModifier(payload)
 
-        // Apply margin (outer spacing)
+        /* ==========================================================
+         * 1️⃣ Margin (outer spacing – Compose has no real margin)
+         * ========================================================== */
         modifier = modifier.padding(ToUtils.edgeInsets(containerProps.margin))
 
-        // Apply shadow/elevation first (before clipping)
-        if (elevation > 0.dp) {
-            modifier = modifier.shadow(
-                elevation = elevation,
-                shape = shape,
-                ambientColor = Color.Black.copy(alpha = 0.1f),
-                spotColor = Color.Black.copy(alpha = 0.2f)
-            )
-        }
+        /* ==========================================================
+         * 2️⃣ Size & Constraints (PURE FIX)
+         * Order: fixed → min/max → fill (%)
+         * ========================================================== */
 
-        // Apply custom shadows
-        containerProps.shadow?.let { shadows ->
-            modifier = modifier.drawBehind {
-                shadows.forEach { shadowProps ->
-                    val shadowColor = Color.Black
-                    val offsetX = (shadowProps.offsetX ?: 0.0).dp.toPx()
-                    val offsetY = (shadowProps.offsetY ?: 0.0).dp.toPx()
-
-                    drawRect(
-                        color = shadowColor.copy(alpha = 0.3f),
-                        topLeft = Offset(offsetX, offsetY),
-                        size = size
-                    )
-                }
-            }
-        }
 
         // Handle width with percentage
         containerProps.width?.let { widthValue ->
@@ -201,58 +408,59 @@ class VWContainer(
                 }
             }
         }
-
-        // Apply background (gradient or color)
+        /* ==========================================================
+         * 3️⃣ Background / Gradient
+         * ========================================================== */
         modifier = when {
-            gradient != null -> modifier.background(brush = gradient, shape = shape)
-            bgColor != null -> modifier.background(color = bgColor, shape = shape)
+            gradient != null -> modifier.background(gradient, shape)
+            bgColor != null -> modifier.background(bgColor, shape)
             else -> modifier
         }
 
-        // Apply decoration image
-        containerProps.decorationImage?.let { decorationImage ->
-            val imageSource = decorationImage.source
-            if (!imageSource.isNullOrEmpty() && imageSource.contains("http")) {
+        /* ==========================================================
+         * 4️⃣ Decoration Image
+         * ========================================================== */
+        containerProps.decorationImage?.let { decoration ->
+            val src = decoration.source
+            if (!src.isNullOrEmpty() && src.startsWith("http")) {
                 val painter = rememberAsyncImagePainter(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageSource)
+                        .data(src)
                         .crossfade(true)
                         .build()
                 )
-                val contentScale = decorationImage.fit.toContentScale()
-                val imageAlignment = decorationImage.alignment.toAlignment()
-                val alpha = (decorationImage.opacity ?: 1.0).toFloat()
 
                 modifier = modifier.paint(
                     painter = painter,
-                    contentScale = contentScale,
-                    alignment = imageAlignment,
-                    alpha = alpha
+                    contentScale = decoration.fit.toContentScale(),
+                    alignment = decoration.alignment.toAlignment(),
+                    alpha = (decoration.opacity ?: 1.0).toFloat()
                 )
             }
         }
 
-        // Apply border
-        val border = containerProps.border
-        val borderWidth = (border?.borderWidth ?: 0.0).dp
-        val borderColor = payload.evalColor(border?.borderColor) ?: Color.Transparent
-        if (borderWidth > 0.dp) {
-            modifier = modifier.border(
-                width = borderWidth,
-                color = borderColor,
-                shape = shape
-            )
+        /* ==========================================================
+         * 5️⃣ Border
+         * ========================================================== */
+        containerProps.border?.let { border ->
+            val width = (border.borderWidth ?: 0.0).dp
+            val color = payload.evalColor(border.borderColor) ?: Color.Transparent
+            if (width > 0.dp) {
+                modifier = modifier.border(width, color, shape)
+            }
         }
 
-        // Clip content to shape
+        /* ==========================================================
+         * 6️⃣ Clip (before clickable)
+         * ========================================================== */
         modifier = modifier.clip(shape)
 
-        // Apply padding (inner spacing)
-        modifier = modifier.padding(ToUtils.edgeInsets(containerProps.padding))
-
-        // Apply onClick gesture
-        commonProps?.onClick?.let { actionFlow ->
-            if (actionFlow.actions.isNotEmpty()) {
+        /* ==========================================================
+         * 7️⃣ Click
+         * ========================================================== */
+        commonProps?.onClick
+            ?.takeIf { it.actions.isNotEmpty() }
+            ?.let { actionFlow ->
                 modifier = modifier.clickable {
                     payload.executeAction(
                         context = context,
@@ -263,15 +471,20 @@ class VWContainer(
                     )
                 }
             }
-        }
 
-        // Render the container
-        if (elevation > 0.dp && (bgColor != null || gradient != null)) {
-            // Use Surface for Material elevation effect
+        /* ==========================================================
+         * 8️⃣ Padding (inner spacing)
+         * ========================================================== */
+        modifier = modifier.padding(ToUtils.edgeInsets(containerProps.padding))
+
+        /* ==========================================================
+         * 9️⃣ Render
+         * ========================================================== */
+        if (elevation > 0.dp) {
             Surface(
                 modifier = modifier,
                 shape = shape,
-                color = bgColor ?: Color.Transparent,
+                color = Color.Transparent,
                 shadowElevation = elevation
             ) {
                 Box(contentAlignment = alignment) {
@@ -279,12 +492,15 @@ class VWContainer(
                 }
             }
         } else {
-            // Use Box for simple container
-            Box(modifier = modifier, contentAlignment = alignment) {
+            Box(
+                modifier = modifier,
+                contentAlignment = alignment
+            ) {
                 child?.ToWidget(payload)
             }
         }
     }
+
 }
 
 // Helper extension functions for percentage constraints
@@ -568,17 +784,16 @@ fun containerBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { childData ->
-            registry.createWidget(childData, parent)
-        }
-    }
+
 
     return VWContainer(
         refName = data.refName,
         commonProps = data.commonProps,
         containerProps = ContainerProps.fromJson(data.props.value),
-        slots = childrenData,
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
         parent = parent,
         parentProps = data.parentProps
     )

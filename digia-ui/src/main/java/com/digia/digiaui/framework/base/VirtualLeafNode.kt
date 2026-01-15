@@ -1,6 +1,8 @@
 package com.digia.digiaui.framework.base
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.digia.digiaui.framework.RenderPayload
 import com.digia.digiaui.framework.models.CommonProps
@@ -17,20 +19,29 @@ abstract class VirtualLeafNode<T>(
 
     @Composable
     override fun ToWidget(payload: RenderPayload) {
-        // Extend hierarchy
+
         val extendedPayload =
             refName?.let { payload.withExtendedHierarchy(it) } ?: payload
 
-        // Visibility
         val isVisible =
             commonProps?.visibility?.let { extendedPayload.evalExpr(it) } ?: true
 
-        if (!isVisible) {
-            return
-        }
+        if (!isVisible) return
 
-      Render(extendedPayload)
+        val align = commonProps?.align
+
+//        if (align != null) {
+//            Box(
+////                modifier = Modifier.fillMaxWidth(), // optional, configurable
+//                contentAlignment = align.toComposeAlignment()
+//            ) {
+//                Render(extendedPayload)
+//            }
+//        } else {
+            Render(extendedPayload)
+//        }
     }
+
 
     @Composable
     override fun Modifier.buildModifier(payload: RenderPayload): Modifier {
@@ -41,3 +52,18 @@ abstract class VirtualLeafNode<T>(
 
 
 
+
+
+fun String.toComposeAlignment(): Alignment =
+    when (this) {
+        "center" -> Alignment.Center
+        "topLeft" -> Alignment.TopStart
+        "topRight" -> Alignment.TopEnd
+        "bottomLeft" -> Alignment.BottomStart
+        "bottomRight" -> Alignment.BottomEnd
+        "centerLeft" -> Alignment.CenterStart
+        "centerRight" -> Alignment.CenterEnd
+        "topCenter" -> Alignment.TopCenter
+        "bottomCenter" -> Alignment.BottomCenter
+        else -> Alignment.Center
+    }

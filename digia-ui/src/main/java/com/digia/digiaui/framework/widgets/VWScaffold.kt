@@ -33,6 +33,7 @@ import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.ExprOr
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 
 /**
@@ -71,7 +72,7 @@ class VWScaffold(
     commonProps: CommonProps? = null,
     props: ScaffoldProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<ScaffoldProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<ScaffoldProps>(
     props = props,
@@ -79,7 +80,7 @@ class VWScaffold(
     parentProps = parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     @Composable
@@ -238,11 +239,6 @@ fun scaffoldBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { childData ->
-            registry.createWidget(childData, parent)
-        }
-    }
 
     return VWScaffold(
         refName = data.refName,
@@ -250,6 +246,9 @@ fun scaffoldBuilder(
         parent = parent,
         parentProps = data.parentProps,
         props = ScaffoldProps.fromJson(data.props.value),
-        slots = childrenData
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 }

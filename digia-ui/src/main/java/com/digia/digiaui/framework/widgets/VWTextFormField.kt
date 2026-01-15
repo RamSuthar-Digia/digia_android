@@ -65,6 +65,7 @@ import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.ExprOr
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.textStyle
 import com.digia.digiaui.framework.utils.JsonLike
 import com.digia.digiaui.framework.utils.NumUtil
@@ -267,7 +268,7 @@ class VWTextFormField(
     parent: VirtualNode?,
     parentProps: Props? = null,
     props: TextFormFieldProps,
-    slots: Map<String, List<VirtualNode>>? = null
+    slots: ((VirtualCompositeNode<TextFormFieldProps>) -> Map<String, List<VirtualNode>>?)? = null,
 ) :
     VirtualCompositeNode<TextFormFieldProps>(
         props = props,
@@ -275,7 +276,7 @@ class VWTextFormField(
         parent = parent,
         refName = refName,
         parentProps = parentProps,
-        slots = slots
+        _slots = slots
     ) {
 
     @Composable
@@ -511,10 +512,6 @@ fun textFormFieldBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData =
-        data.childGroups?.mapValues { (_, childrenData) ->
-            childrenData.map { childData -> registry.createWidget(childData, parent) }
-        }
 
     return VWTextFormField(
         refName = data.refName,
@@ -522,7 +519,10 @@ fun textFormFieldBuilder(
         parent = parent,
         parentProps = data.props,
         props = TextFormFieldProps.fromJson(data.props.value),
-        slots = childrenData
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 }
 

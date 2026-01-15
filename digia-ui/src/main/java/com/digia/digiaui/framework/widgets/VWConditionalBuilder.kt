@@ -8,13 +8,14 @@ import com.digia.digiaui.framework.base.VirtualNode
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 
 class VWConditionalBuilder(
     refName: String? = null,
     commonProps: CommonProps? = null,
     props: Props,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<Props>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<Props>(
 props = props,
@@ -22,7 +23,7 @@ commonProps = commonProps,
 parentProps= parentProps,
 parent = parent,
 refName = refName,
-slots = slots
+_slots = slots
 ) {
 
     fun getEvalChild(payload: RenderPayload): VirtualNode? {
@@ -63,7 +64,10 @@ fun conditionalBuilder(data: VWNodeData, parent: VirtualNode?,registry: VirtualW
         parent= parent,
         parentProps = data.parentProps,
         props = data.props,
-        slots = childrenData
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 
 }

@@ -10,7 +10,7 @@ abstract class VirtualCompositeNode<T>(
     parent: VirtualNode?,
     refName: String?,
     parentProps: Props? = null,
-    val slots: Map<String, List<VirtualNode>>?
+    private val _slots: ((VirtualCompositeNode<T>) -> Map<String, List<VirtualNode>>?)? = null
 ) : VirtualLeafNode<T>(
     props = props,
     commonProps = commonProps,
@@ -18,6 +18,9 @@ abstract class VirtualCompositeNode<T>(
     refName = refName,
     parentProps = parentProps
 ) {
+
+    val slots: Map<String, List<VirtualNode>>?
+        get() = _slots?.invoke(this)
 
     val child: VirtualNode?
         get() = slot("child")

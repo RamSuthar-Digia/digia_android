@@ -17,6 +17,7 @@ import com.digia.digiaui.framework.expr.DefaultScopeContext
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 
 /**
@@ -62,7 +63,7 @@ class VWListView(
     commonProps: CommonProps? = null,
     props: ListViewProps,
     parent: VirtualNode? = null,
-    slots: Map<String, List<VirtualNode>>? = null,
+    slots: ((VirtualCompositeNode<ListViewProps>) -> Map<String, List<VirtualNode>>?)? = null,
     parentProps: Props? = null
 ) : VirtualCompositeNode<ListViewProps>(
     props = props,
@@ -70,7 +71,7 @@ class VWListView(
     parentProps= parentProps,
     parent = parent,
     refName = refName,
-    slots = slots
+    _slots = slots
 ) {
 
     private val shouldRepeatChild: Boolean
@@ -163,12 +164,6 @@ class VWListView(
 
 /** Builder function for ListView widget */
 fun listViewBuilder(data: VWNodeData, parent: VirtualNode?,registry: VirtualWidgetRegistry): VirtualNode {
-    // Get the first child from childGroups as the template
-    val childrenData = data.childGroups?.mapValues { (_, childrenData) ->
-        childrenData.map { data ->
-            registry.createWidget(data, parent)
-        }
-    }
 
     return VWListView(
         refName = data.refName,
@@ -176,7 +171,10 @@ fun listViewBuilder(data: VWNodeData, parent: VirtualNode?,registry: VirtualWidg
         parent= parent,
         parentProps = data.parentProps,
         props = ListViewProps.fromJson(data.props.value ),
-        slots = childrenData
+        slots = {
+                self ->
+            registerAllChildern(data.childGroups, self, registry)
+        },
     )
 
 }

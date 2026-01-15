@@ -164,3 +164,12 @@ class VirtualBuilderWidget(
         builder(payload)
     }
 }
+
+
+fun registerAllChildern(childGroups: Map<String, List<VWData>>?, parent: VirtualNode?, registry: VirtualWidgetRegistry,): Map<String, List<VirtualNode>>? {
+   return childGroups?.mapValues { (_, childrenData) ->
+        childrenData.map { childData ->
+            registry.createWidget(childData, parent)
+        }
+    }
+}
