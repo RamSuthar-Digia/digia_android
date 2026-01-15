@@ -113,8 +113,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Image Loading
-    implementation("io.coil-kt:coil-compose:2.5.0")
-    implementation("io.coil-kt:coil-svg:2.5.0") 
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-svg:2.7.0") 
     implementation(libs.androidx.compose.runtime)
     implementation(libs.compose.material3)
     implementation(libs.androidx.compose.foundation.layout)
