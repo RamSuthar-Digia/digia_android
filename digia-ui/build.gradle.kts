@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.digia"
-version = "1.0.0"
+version = "1.0.0-beta.1"
 
 android {
     namespace = "com.digia.digiaui"
@@ -61,10 +61,15 @@ android {
             manifest.srcFile("src/main/AndroidManifest.xml")
         }
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
-    implementation(libs.digiaexpr)
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.7.2")
@@ -92,6 +97,7 @@ dependencies {
 
     // Networking
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+        implementation(libs.digia.expr.kt)
 
     // DataStore for preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
@@ -139,7 +145,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.digia"
                 artifactId = "digia-ui"
-                version = "1.0.0"
+version = "1.0.0-beta.1"
 
                 pom {
                     name.set("Digia UI Compose")
