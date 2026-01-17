@@ -24,33 +24,37 @@ class VWStateContainer(
     private val childGroups: Map<String, List<VirtualNode>>?
 ) : VirtualNode(refName, parent, parentProps) {
 
-    // Get the first child from childGroups (similar to Flutter implementation)
-    private val child: VirtualNode? = childGroups?.entries?.firstOrNull()?.value?.firstOrNull()
+    private val child: VirtualNode? =
+        childGroups?.entries?.firstOrNull()?.value?.firstOrNull()
 
     @Composable
     override fun Render(payload: RenderPayload) {
-        if (child == null) {
+        val child = child ?: run {
             Empty()
             return
         }
 
-        // Resolve initial state values by evaluating expressions/defaults
-        val resolvedState = initStateDefs.mapValues { (_, variable) ->
-            // Try to evaluate default value as expression, fallback to literal value
-         payload.eval<Any>(variable.defaultValue)
+        // ✅ Evaluate initial state ONCE
+        val resolvedState = initStateDefs.mapValues {
+            payload.eval<Any>(it.value.defaultValue)
         }
 
-        // Create stateful scope widget that provides state context
         StateScope(
             namespace = refName,
-            initialState = resolvedState,
+            initialState = resolvedState
         ) { stateContext ->
-            key (stateContext){
-                child.ToWidget(payload.copyWithChainedContext(_createExprContext(stateContext = stateContext)))
-            }
-        }
 
+            val scopeContext = _createExprContext(stateContext)
+val payload=payload.copyWithChainedContext(scopeContext)
+stateContext.Version()
+
+            child.ToWidget(
+                payload = payload
+            )
+        }
     }
+
+
 
     fun _createExprContext(
                            stateContext: StateContext) : StateScopeContext {

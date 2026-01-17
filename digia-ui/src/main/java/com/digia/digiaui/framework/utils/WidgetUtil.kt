@@ -49,6 +49,8 @@ fun Modifier.applyCommonProps(
     val style = commonProps.style
     var modifier = this
 
+    var align = commonProps.align
+
     if (style != null) {
 
         val margin = ToUtils.edgeInsets(style.margin)
@@ -135,6 +137,11 @@ fun Modifier.applyCommonProps(
             )
         }
     }
+
+
+//    if(align != null){
+//        modifier = modifier.align(align)
+//    }
 
     return modifier
 }

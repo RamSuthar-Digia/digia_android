@@ -28,17 +28,8 @@ abstract class VirtualLeafNode<T>(
 
         if (!isVisible) return
 
-
-//        if (align != null) {
-//            Box(
-////                modifier = Modifier.fillMaxWidth(), // optional, configurable
-//                contentAlignment = align.toComposeAlignment()
-//            ) {
-//                Render(extendedPayload)
-//            }
-//        } else {
             Render(extendedPayload)
-//        }
+
     }
 
 
