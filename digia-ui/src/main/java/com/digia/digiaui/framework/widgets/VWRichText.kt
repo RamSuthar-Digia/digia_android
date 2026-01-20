@@ -99,7 +99,6 @@ class VWRichText(
         val alignmentStr = payload.evalObserve(props.alignment)
 
         // 2. Map Enums
-        println("VWRichText: alignmentStr=$alignmentStr")
         val overflow =
                 when (overflowStr) {
                     "ellipsis" -> TextOverflow.Ellipsis
