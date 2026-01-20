@@ -54,7 +54,7 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
     register("fw/sizedBox",::sizedBoxBuilder)
     register("fw/sized_box",::sizedBoxBuilder)
     register("digia/gridView",::dummyBuilder)
-    register("digia/richText",::dummyBuilder)
+    register("digia/richText",::richTextBuilder)
     register("digia/calendar",::dummyBuilder)
 }
 
