@@ -13,7 +13,7 @@ enum class NodeType {
 
     companion object {
         fun fromString(value: String): NodeType? {
-            return NodeType.entries.firstOrNull { it.name == value }
+            return NodeType.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
         }
     }
 }
@@ -28,7 +28,7 @@ sealed class VWData {
     companion object {
         fun fromJson(json: JsonLike): VWData {
             val nodeType =
-                NodeType.fromString(tryKeys(json, listOf("category", "nodeType")) ?: "widget")
+                NodeType.fromString(asSafe<String>(tryKeys(json, listOf("category", "nodeType")))?:"widget")
                     ?: NodeType.Widget
 
             return when (nodeType) {

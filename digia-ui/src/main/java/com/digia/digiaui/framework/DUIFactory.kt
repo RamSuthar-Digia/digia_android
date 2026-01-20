@@ -457,6 +457,28 @@ class DUIFactory private constructor() {
     }
 
     /**
+     * Gets the widget registry.
+     * 
+     * @return The widget registry instance
+     * @throws IllegalStateException if factory is not initialized
+     */
+    fun getRegistry(): DefaultVirtualWidgetRegistry {
+        checkInitialized()
+        return widgetRegistry
+    }
+
+    /**
+     * Gets the UI resources.
+     * 
+     * @return The UI resources instance
+     * @throws IllegalStateException if factory is not initialized
+     */
+    fun getResources(): UIResources {
+        checkInitialized()
+        return resources
+    }
+
+    /**
      * Helper method to merge two maps, with the override map taking precedence.
      */
     private fun <K, V> mergeMap(base: Map<K, V>?, override: Map<K, V>?): Map<K, V>? {

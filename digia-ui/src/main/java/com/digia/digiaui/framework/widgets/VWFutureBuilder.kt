@@ -117,7 +117,7 @@ fun <T> AsyncBuilder(
     }
 
     // Trigger load when controller changes
-    LaunchedEffect(asyncController,asyncController.isDirty()) {
+    LaunchedEffect(asyncController,asyncController.isDirty(),LocalStateContextProvider.current?.Version()) {
         asyncController.load(scope)
     }
 

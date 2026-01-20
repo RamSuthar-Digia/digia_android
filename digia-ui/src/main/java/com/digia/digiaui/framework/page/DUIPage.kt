@@ -13,6 +13,7 @@ import com.digia.digiaexpr.std.StdLibFunctions
 import com.digia.digiaui.framework.RenderPayload
 import com.digia.digiaui.framework.VirtualWidgetRegistry
 import com.digia.digiaui.framework.actions.LocalActionExecutor
+import com.digia.digiaui.framework.actions.showToast.DUISnackbarHost
 import com.digia.digiaui.framework.appstate.AppStateScopeContext
 import com.digia.digiaui.framework.appstate.DUIAppState
 import com.digia.digiaui.framework.datatype.DataTypeCreator
@@ -60,9 +61,9 @@ fun DUIPage(
 
     val rootNode = pageDef.layout?.root ?: return
 
-    val virtualWidget = remember(rootNode) {
-        registry.createWidget(rootNode, null)
-    }
+//    val virtualWidget = remember(rootNode) {
+//        registry.createWidget(rootNode, null)
+//    }
 
 
 
@@ -82,7 +83,7 @@ fun DUIPage(
 
 
             
-            val scopeContext = remember(resolvedPageArgs, stateContext,stateContext.Version()) {
+            val scopeContext = remember(resolvedPageArgs, stateContext) {
                 _createExprContext(
                     params = resolvedPageArgs,
                     stateContext = stateContext,
@@ -139,10 +140,12 @@ fun DUIPage(
                 }
             }
 
+            stateContext.Version()
+
             /* ----------------------------------------
              * Render page
              * ---------------------------------------- */
-            virtualWidget.ToWidget(
+            registry.createWidget(rootNode,null).ToWidget(
                     renderPayload
             )
 
@@ -161,6 +164,8 @@ fun RootStateTreeProvider(content: @Composable () -> Unit) {
     ) {
         content()
     }
+
+    DUISnackbarHost()
 }
 
 

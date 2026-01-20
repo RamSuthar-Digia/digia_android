@@ -17,7 +17,7 @@ class ControlObjectProcessor(
     private val registry: MethodBindingRegistry
 ) : ActionProcessor<ControlObjectAction>() {
 
-    override fun execute(
+    override suspend fun execute(
         context: Context,
         action: ControlObjectAction,
         scopeContext: ScopeContext?,

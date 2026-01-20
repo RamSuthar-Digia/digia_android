@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -30,6 +31,7 @@ import com.digia.digiaui.framework.color
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.CommonStyle
 import com.digia.digiaui.framework.state.LocalStateContextProvider
+import kotlinx.coroutines.launch
 
 val PaddingValuesZero = PaddingValues(0.dp)
 
@@ -45,6 +47,8 @@ fun Modifier.applyCommonProps(
     val context = LocalContext.current.applicationContext
     val resources = LocalUIResources.current
     val stateContext = LocalStateContextProvider.current
+    val scope = rememberCoroutineScope()
+
 
     val style = commonProps.style
     var modifier = this
@@ -90,6 +94,7 @@ fun Modifier.applyCommonProps(
         val actionFlow = commonProps.onClick
         if (actionFlow != null && actionFlow.actions.isNotEmpty()) {
             modifier = modifier.clickable {
+                scope.launch {
                 payload.executeAction(
                     context = context,
                     actionFlow = actionFlow,
@@ -97,6 +102,7 @@ fun Modifier.applyCommonProps(
                     resourceProvider = resources,
                     actionExecutor = actionExecutor
                 )
+                    }
             }
         }
 

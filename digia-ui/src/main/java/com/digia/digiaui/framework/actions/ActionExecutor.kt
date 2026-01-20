@@ -39,7 +39,7 @@ class ActionExecutor(
         private val methodBindingRegistry: MethodBindingRegistry = MethodBindingRegistry()
 ) {
     /** Execute an action flow */
-    fun execute(
+    suspend fun execute(
             context: Context,
             actionFlow: ActionFlow,
             scopeContext: ScopeContext?,
@@ -71,7 +71,7 @@ class ActionExecutor(
                             scopeContext = scopeContext,
                             stateContext = stateContext,
                             id = action.actionId!!.id,
-                        resourceProvider = resourceProvider
+                            resourcesProvider = resourceProvider
                     )
                 } catch (e: Exception) {
                     // Log error (in production, use proper logging)

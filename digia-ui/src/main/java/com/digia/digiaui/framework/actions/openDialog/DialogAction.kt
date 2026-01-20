@@ -1,6 +1,7 @@
-package com.digia.digiaui.framework.actions.showBottomSheet
+package com.digia.digiaui.framework.actions.openDialog
 
 import android.content.Context
+import com.digia.digiaui.framework.UIResources
 import com.digia.digiaui.framework.actions.base.Action
 import com.digia.digiaui.framework.actions.base.ActionFlow
 import com.digia.digiaui.framework.actions.base.ActionId
@@ -12,96 +13,83 @@ import com.digia.digiaui.framework.state.StateContext
 import com.digia.digiaui.framework.utils.JsonLike
 import kotlinx.coroutines.launch
 
-
 /**
- * ShowBottomSheet Action
+ * ShowDialog Action
  *
- * Displays a bottom sheet modal with specified content.
+ * Displays a dialog modal with specified content.
  */
-data class ShowBottomSheetAction(
+data class ShowDialogAction(
     override var actionId: ActionId? = null,
     override var disableActionIf: ExprOr<Boolean>? = null,
     val viewData: ExprOr<JsonLike>?,
+    val barrierDismissible: ExprOr<Boolean>?,
+    val barrierColor: ExprOr<String>?,
     val waitForResult: Boolean = false,
-    val style: JsonLike?,
     val onResult: ActionFlow?
 ) : Action {
-    override val actionType = ActionType.SHOW_BOTTOM_SHEET
+    override val actionType = ActionType.SHOW_DIALOG
 
     override fun toJson(): JsonLike =
         mapOf(
             "type" to actionType.value,
             "viewData" to viewData?.toJson(),
+            "barrierDismissible" to barrierDismissible?.toJson(),
+            "barrierColor" to barrierColor?.toJson(),
             "waitForResult" to waitForResult,
-            "style" to style,
             "onResult" to onResult?.toJson()
         )
 
     companion object {
-        fun fromJson(json: JsonLike): ShowBottomSheetAction {
-            return ShowBottomSheetAction(
+        fun fromJson(json: JsonLike): ShowDialogAction {
+            return ShowDialogAction(
                 viewData = ExprOr.fromJson<JsonLike>(json["viewData"]),
+                barrierDismissible = ExprOr.fromJson<Boolean>(json["barrierDismissible"]),
+                barrierColor = ExprOr.fromJson<String>(json["barrierColor"]),
                 waitForResult = json["waitForResult"] as? Boolean ?: false,
-                style = json["style"] as? JsonLike,
                 onResult = (json["onResult"] as? JsonLike)?.let { ActionFlow.fromJson(it) }
             )
         }
     }
 }
 
-
-/** Processor for show bottom sheet action */
-class ShowBottomSheetProcessor : ActionProcessor<ShowBottomSheetAction>() {
+/** Processor for show dialog action */
+class ShowDialogProcessor : ActionProcessor<ShowDialogAction>() {
     override suspend fun execute(
         context: Context,
-        action: ShowBottomSheetAction,
+        action: ShowDialogAction,
         scopeContext: ScopeContext?,
         stateContext: StateContext?,
-        resourceProvider: com.digia.digiaui.framework.UIResources?,
+        resourceProvider: UIResources?,
         id: String
     ): Any? {
         // Evaluate viewData to get component/view ID and arguments
         val viewData = action.viewData?.evaluate<JsonLike>(scopeContext)
         if (viewData == null) {
-            android.util.Log.e("ShowBottomSheet", "viewData is null")
+            android.util.Log.e("ShowDialog", "viewData is null")
             return null
         }
 
         val componentId = viewData["id"] as? String
         if (componentId.isNullOrEmpty()) {
-            android.util.Log.e("ShowBottomSheet", "componentId is empty")
+            android.util.Log.e("ShowDialog", "componentId is empty")
             return null
         }
 
         val args = viewData["args"] as? JsonLike
-        val style = action.style ?: emptyMap()
 
-        // Extract style properties
-        val bgColorStr = (style["bgColor"] as? String)?.let {
-            ExprOr.fromJson<String>(it)?.evaluate(scopeContext)
-        } ?: style["bgColor"] as? String
+        // Evaluate dialog properties
+        val barrierDismissible = action.barrierDismissible?.evaluate(scopeContext) ?: true
+        val barrierColorStr = action.barrierColor?.evaluate<String>(scopeContext)
 
-        val barrierColorStr = (style["barrierColor"] as? String)?.let {
-            ExprOr.fromJson<String>(it)?.evaluate(scopeContext)
-        } ?: style["barrierColor"] as? String
+        // Get the dialog manager from DigiaUIManager
+        val dialogManager = com.digia.digiaui.init.DigiaUIManager.getInstance().dialogManager
 
-        val maxHeightRatio = ((style["maxHeight"] as? Number)?.toDouble()
-            ?: ExprOr.fromJson<Number>(style["maxHeight"])?.evaluate<Number>(scopeContext)?.toDouble())
-            ?: 1.0
-
-        val useSafeArea = (style["useSafeArea"] as? Boolean) ?: true
-
-        // Get the bottom sheet manager from DigiaUIManager
-        val bottomSheetManager = com.digia.digiaui.init.DigiaUIManager.getInstance().bottomSheetManager
-
-        // Show the bottom sheet
-        bottomSheetManager?.show(
+        // Show the dialog
+        dialogManager?.show(
             componentId = componentId,
             args = args,
-            backgroundColor = bgColorStr,
+            barrierDismissible = barrierDismissible,
             barrierColor = barrierColorStr,
-            maxHeightRatio = maxHeightRatio.toFloat(),
-            useSafeArea = useSafeArea,
             onDismiss = { result ->
                 // Handle result if waitForResult is true
                 if (action.waitForResult && action.onResult != null) {
@@ -125,4 +113,5 @@ class ShowBottomSheetProcessor : ActionProcessor<ShowBottomSheetAction>() {
 
         return null
     }
+
 }
