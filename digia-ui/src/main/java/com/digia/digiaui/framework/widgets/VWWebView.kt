@@ -1,5 +1,6 @@
 package com.digia.digiaui.framework.widgets
 
+import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
@@ -79,7 +80,17 @@ class VWWebView(
                 modifier = modifier,
                 factory = { context ->
                     WebView(context).apply {
-                        settings.javaScriptEnabled = true
+                        layoutParams =
+                                ViewGroup.LayoutParams(
+                                        ViewGroup.LayoutParams.MATCH_PARENT,
+                                        ViewGroup.LayoutParams.MATCH_PARENT
+                                )
+                        settings.apply {
+                            javaScriptEnabled = true
+                            useWideViewPort = true
+                            loadWithOverviewMode = true
+                            domStorageEnabled = true
+                        }
                         webViewClient = WebViewClient() // Opens links in this WebView
                         loadUrl(url)
                         webView = this
