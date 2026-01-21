@@ -54,7 +54,6 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
     register("fw/sizedBox", ::sizedBoxBuilder)
     register("fw/sized_box", ::sizedBoxBuilder)
     register("digia/gridView", ::gridViewBuilder)
-    register("gridView", ::gridViewBuilder) // Alias
     register("digia/masonryGridView", ::gridViewBuilder)
     register("digia/calendar", ::dummyBuilder)
 }
