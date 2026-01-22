@@ -78,6 +78,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.animation:animation")
     implementation(libs.lottie.compose)
 
 
@@ -90,6 +92,12 @@ dependencies {
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // Markdown (Markwon)
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:ext-strikethrough:4.6.2")
+    implementation("io.noties.markwon:ext-tables:4.6.2")
+    implementation("io.noties.markwon:linkify:4.6.2")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -125,6 +133,7 @@ implementation(libs.digia.expr.kt)
     implementation(libs.androidx.media3.ui.compose.material3)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.compose.foundation)
 //    implementation(libs.androidx.navigation.runtime.ktx)
 
 

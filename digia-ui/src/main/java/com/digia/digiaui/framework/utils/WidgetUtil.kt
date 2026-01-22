@@ -99,7 +99,7 @@ fun Modifier.applyCommonProps(
                     context = context,
                     actionFlow = actionFlow,
                     stateContext = stateContext,
-                    resourceProvider = resources,
+                    resourcesProvider = resources,
                     actionExecutor = actionExecutor
                 )
                     }
@@ -151,7 +151,7 @@ fun Modifier.applyCommonProps(
                     context = context,
                     actionFlow = actionFlow,
                     stateContext = stateContext,
-                    resourceProvider = resources,
+                    resourcesProvider = resources,
                     actionExecutor = actionExecutor
                 )
             }
