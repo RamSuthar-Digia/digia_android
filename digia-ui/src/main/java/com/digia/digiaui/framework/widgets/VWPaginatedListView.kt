@@ -1,8 +1,10 @@
 package com.digia.digiaui.framework.widgets
 
+import LocalApiModels
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.paging.LoadState
 import androidx.paging.Pager
@@ -22,6 +24,7 @@ import com.digia.digiaui.framework.models.VWNodeData
 import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.utils.JsonLike
 import com.digia.digiaui.framework.utils.executeApiAction
+import com.digia.digiaui.network.APIModel
 
 /** PaginatedListView widget properties */
 data class PaginatedListViewProps(
@@ -77,9 +80,6 @@ class VWPaginatedListView(
                 _slots = slots
         ) {
 
-    private val shouldRepeatChild: Boolean
-        get() = props.dataSource != null
-
     @Composable
     override fun Render(payload: RenderPayload) {
         if (child == null) {
@@ -90,17 +90,25 @@ class VWPaginatedListView(
         val firstPageLoadingWidget = slot("firstPageLoadingWidget")
         val newPageLoadingWidget = slot("newPageLoadingWidget")
 
-        val initialScrollPosition = payload.evalExpr(props.initialScrollPosition)
         val isReverse = payload.evalExpr(props.reverse) ?: false
 
-        // We use Pager
+        // Get API models from CompositionLocal
+        val apiModels = LocalApiModels.current
+
+        // Create pager with remembered paging source factory
         val pager =
-                androidx.paging.Pager(
-                        config = PagingConfig(pageSize = 20, enablePlaceholders = false),
-                        pagingSourceFactory = {
-                            GenericPagingSource(payload = payload, props = props)
-                        }
-                )
+                remember(props, payload.scopeContext, apiModels) {
+                    Pager(
+                            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+                            pagingSourceFactory = {
+                                GenericPagingSource(
+                                        payload = payload,
+                                        props = props,
+                                        apiModels = apiModels
+                                )
+                            }
+                    )
+                }
 
         val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
@@ -135,7 +143,8 @@ class VWPaginatedListView(
 
     class GenericPagingSource(
             private val payload: RenderPayload,
-            private val props: PaginatedListViewProps
+            private val props: PaginatedListViewProps,
+            private val apiModels: Map<String, APIModel>
     ) : PagingSource<Any, Any>() {
 
         override fun getRefreshKey(state: PagingState<Any, Any>): Any? {
@@ -166,8 +175,8 @@ class VWPaginatedListView(
                 }
 
                 val apiModel =
-                        payload.getApiModel(apiId)
-                                ?: return LoadResult.Error(Exception("API not found"))
+                        apiModels[apiId]
+                                ?: return LoadResult.Error(Exception("API not found: $apiId"))
 
                 val scope =
                         DefaultScopeContext(
@@ -182,19 +191,21 @@ class VWPaginatedListView(
                         apiModel = apiModel,
                         args = props.args,
                         onSuccess = { respObj ->
-                            val newItems =
-                                    props.transformItems?.evaluate(
+                            val transformedItems =
+                                    props.transformItems?.evaluate<List<Any>>(
                                             DefaultScopeContext(
                                                     variables = mapOf("response" to respObj),
                                                     enclosing = scope
                                             )
-                                    ) as?
-                                            List<Any>
+                                    )
+
+                            val newItems =
+                                    transformedItems
                                             ?: (respObj["body"] as? List<*>)?.filterNotNull()
-                                                    ?: emptyList<Any>()
+                                                    ?: emptyList()
 
                             val nextPageKey =
-                                    props.nextPageKey?.evaluate(
+                                    props.nextPageKey?.evaluate<Any>(
                                             DefaultScopeContext(
                                                     variables = mapOf("response" to respObj),
                                                     enclosing = scope
