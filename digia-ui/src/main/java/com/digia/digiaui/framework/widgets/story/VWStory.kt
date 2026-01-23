@@ -101,7 +101,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources
+                                                resourcesProvider = resources
                                         )
                                 }
                         },
@@ -112,7 +112,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources,
+                                                resourcesProvider = resources,
                                                 incomingScopeContext =
                                                         DefaultScopeContext(
                                                                 variables = mapOf("index" to index)
@@ -127,7 +127,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources
+                                                resourcesProvider = resources
                                         )
                                 }
                         },
@@ -138,7 +138,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources,
+                                                resourcesProvider = resources,
                                                 incomingScopeContext =
                                                         DefaultScopeContext(
                                                                 variables =
@@ -161,7 +161,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources,
+                                                resourcesProvider = resources,
                                                 incomingScopeContext =
                                                         DefaultScopeContext(
                                                                 variables =
@@ -184,7 +184,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources
+                                                resourcesProvider = resources
                                         )
                                 }
                                 true // Return true to continue with default navigation
@@ -196,7 +196,7 @@ class VWStory(
                                                 actionFlow = action,
                                                 actionExecutor = actionExecutor,
                                                 stateContext = stateContext,
-                                                resourceProvider = resources
+                                                resourcesProvider = resources
                                         )
                                 }
                                 true // Return true to continue with default navigation

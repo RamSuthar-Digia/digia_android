@@ -176,7 +176,7 @@ class VWRichText(
                                             actionFlow = action,
                                             actionExecutor = actionExecutor,
                                             stateContext = stateContext,
-                                            resourceProvider = resources
+                                            resourcesProvider = resources
                                     )
                                 }
                             }

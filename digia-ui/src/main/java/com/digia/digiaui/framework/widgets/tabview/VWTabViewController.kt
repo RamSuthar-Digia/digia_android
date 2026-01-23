@@ -131,7 +131,7 @@ class VWTabViewController(
                         actionFlow = actionFlow,
                         actionExecutor = actionExecutor,
                         stateContext = stateContext,
-                        resourceProvider = resources,
+                        resourcesProvider = resources,
                         incomingScopeContext = scopeContext
                 )
             }

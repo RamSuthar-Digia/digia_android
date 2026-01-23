@@ -90,7 +90,11 @@ class ExprOr<T : Any> private constructor(
                  return evaluateExpression<T>(expressionString, scopeContext)
              } else {
                  // If it's not an expression, use decoder or cast it to R
-                 return decoder?.invoke(value) ?: value.to<T>()
+                 return if(decoder!=null){
+                        decoder.invoke(value)
+                    } else {
+                        value.to<T>()
+                 }
              }
          } catch (e: Exception) {
              e.printStackTrace()

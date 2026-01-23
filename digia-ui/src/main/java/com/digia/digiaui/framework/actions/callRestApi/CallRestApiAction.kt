@@ -108,37 +108,37 @@ class CallRestApiProcessor : ActionProcessor<CallRestApiAction>() {
                         println("CallRestApiAction: API call successful")
                         
                         if (action.onSuccess != null) {
-                            withContext(Dispatchers.Main) {
-                                actionExecutor.execute(
-                                    context = context,
-                                    actionFlow = action.onSuccess,
-                                    scopeContext = DefaultScopeContext(
-                                        variables = mapOf("response" to response),
-                                        enclosing = scopeContext
-                                    ),
-                                    stateContext = stateContext,
-                                    resourcesProvider = resourcesProvider
-                                )
-                            }
+                            actionExecutor.execute(
+                                context = context,
+                                actionFlow = action.onSuccess,
+                                scopeContext = DefaultScopeContext(
+                                    variables = mapOf("response" to response),
+                                    enclosing = scopeContext
+                                ),
+                                stateContext = stateContext,
+                                resourcesProvider = resourcesProvider
+                            )
+                        } else {
+                            null
                         }
                     },
                     onError = { response ->
                         println("CallRestApiAction: API call error")
                         
                         if (action.onError != null) {
-                            withContext(Dispatchers.Main) {
-                                actionExecutor.execute(
-                                    context = context,
-                                    actionFlow = action.onError,
-                                    scopeContext = DefaultScopeContext(
-                                        variables = mapOf("response" to response),
-                                        enclosing = scopeContext
-                                    ),
-                                    stateContext = stateContext,
-                                    resourcesProvider = resourcesProvider
+                            actionExecutor.execute(
+                                context = context,
+                                actionFlow = action.onError,
+                                scopeContext = DefaultScopeContext(
+                                    variables = mapOf("response" to response),
+                                    enclosing = scopeContext
+                                ),
+                                stateContext = stateContext,
+                                resourcesProvider = resourcesProvider
 
-                                )
-                            }
+                            )
+                        } else {
+                            null
                         }
                     }
                 )

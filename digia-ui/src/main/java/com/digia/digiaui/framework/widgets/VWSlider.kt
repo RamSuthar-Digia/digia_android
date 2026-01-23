@@ -152,7 +152,7 @@ class VWSlider(
                                                         actionFlow = action,
                                                         actionExecutor = actionExecutor,
                                                         stateContext = stateContext,
-                                                        resourceProvider = resources,
+                                                        resourcesProvider = resources,
                                                         incomingScopeContext = scopeContext
                                                 )
                                         }

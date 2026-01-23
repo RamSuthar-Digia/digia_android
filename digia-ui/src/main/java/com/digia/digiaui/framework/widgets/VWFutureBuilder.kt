@@ -192,15 +192,27 @@ class VWAsyncBuilder(
             payload.evalExpr<AsyncController<Any?>>(props.controller)
                 ?: remember { AsyncController<Any?>() }
 
-        controller.setFutureCreator {
-            makeFuture(
-                props,
-                payload,
-                context,
-                actionExecutor,
-                stateContext,
-                resourceProvider = resourceProvider
-            )
+        val futureCreator = remember(
+            props.future,
+            props.onSuccess,
+            props.onError,
+            payload.scopeContext,
+            stateContext?.version,
+        ) {
+            suspend {
+                makeFuture(
+                    props,
+                    payload,
+                    context,
+                    actionExecutor,
+                    stateContext,
+                    resourceProvider = resourceProvider
+                )
+            }
+        }
+
+        LaunchedEffect(controller, futureCreator) {
+            controller.setFutureCreator { futureCreator() }
         }
 
         // Invalidate controller when state version changes
@@ -209,63 +221,19 @@ class VWAsyncBuilder(
             controller.invalidate()
         }
 
+        val initialData= payload.evalExpr(props.initialData, decoder ={
+                it->
+            if (it is Map<*, *>&&it.isEmpty()) {
+                return@evalExpr null
+            }
+            return@evalExpr null
+        })
+
         // 👇 gate to control UI rendering
         AsyncBuilder(
             controller = controller,
-            initialData = payload.evalExpr(props.initialData)
+            initialData =initialData,
         ) { asyncState ->
-
-            // ✅ gate to block UI until actions complete
-            var readyToShow by remember { mutableStateOf(false) }
-
-            LaunchedEffect(asyncState) {
-                readyToShow = false  // block UI
-
-                when (asyncState) {
-                    is AsyncState.Success -> {
-                        props.onSuccess?.let { action ->
-                            payload.executeAction(
-                                context,
-                                action,
-                                actionExecutor,
-                                stateContext,
-                                resourceProvider,
-                                incomingScopeContext = DefaultScopeContext(
-                                    variables = mapOf("response" to asyncState.data)
-                                ),
-                            )
-                        }
-                    }
-
-                    is AsyncState.Error -> {
-                        props.onError?.let { action ->
-                            payload.executeAction(
-                                context,
-                                action,
-                                actionExecutor,
-                                stateContext,
-                                resourceProvider,
-                                incomingScopeContext = DefaultScopeContext(
-                                    variables = mapOf(
-                                        "response" to mapOf("error" to asyncState.throwable.message)
-                                    )
-                                ),
-                            )
-                        }
-                    }
-
-                    else -> Unit
-                }
-
-                readyToShow = true // allow UI after actions complete
-            }
-
-            // 🚫 Block child rendering until actions complete
-            if (!readyToShow) {
-                // optionally show a loading widget
-                LoadingWidget()
-                return@AsyncBuilder
-            }
 
             val futureType = getFutureType(props, payload)
 
@@ -278,11 +246,29 @@ class VWAsyncBuilder(
 
     }
 
-    @Composable
-    fun LoadingWidget() {
-        Text("Loading...")
-    }
+}
 
+
+private suspend fun executeActionAndAwait(
+    payload: RenderPayload,
+    context: Context,
+    actionFlow: ActionFlow?,
+    actionExecutor: ActionExecutor,
+    stateContext: StateContext?,
+    resourceProvider: UIResources?,
+    incomingScopeContext: ScopeContext? = null,
+) {
+    if (actionFlow == null) return
+
+    val combinedContext = payload.chainExprContext(incomingScopeContext)
+    val job = actionExecutor.execute(
+        context = context,
+        actionFlow = actionFlow,
+        scopeContext = combinedContext,
+        stateContext = stateContext,
+        resourcesProvider = resourceProvider,
+    )
+    job.join()
 }
 
 
@@ -425,11 +411,16 @@ private suspend fun makeFuture(
     val type = getFutureType(props, payload) ?: return null
 
     return when (type) {
-        FutureType.api ->
-            makeApiFuture(futureProps, payload, props,context,
-                actionExecutor,
-                stateContext,
-                resourceProvider)
+        FutureType.api -> makeApiFuture(
+            futureProps = futureProps,
+            payload = payload,
+            context = context,
+            actionExecutor = actionExecutor,
+            stateContext = stateContext,
+            resourceProvider = resourceProvider,
+            onSuccess = props.onSuccess,
+            onError = props.onError,
+        )
     }
 }
 
@@ -438,14 +429,15 @@ private suspend fun makeFuture(
 private suspend fun makeApiFuture(
     futureProps: JsonLike,
     payload: RenderPayload,
-    props: AsyncBuilderProps,
     context: Context,
     actionExecutor: ActionExecutor,
     stateContext: StateContext?,
-    resourceProvider: UIResources?
+    resourceProvider: UIResources?,
+    onSuccess: ActionFlow?,
+    onError: ActionFlow?,
 ): ApiResponse<Any> {
 
-        val dataSource =asSafe<JsonLike>( futureProps["dataSource"])
+    val dataSource =asSafe<JsonLike>( futureProps["dataSource"])
     val apiId = dataSource?.get("id") as? String
         ?: error("No API Selected")
 
@@ -457,41 +449,37 @@ private suspend fun makeApiFuture(
         ExprOr.fromValue<Any>(v)
     }
 
-    // Execute API action using executeApiAction
+    // Execute API call; await success/error actions BEFORE returning (so AsyncState changes only after actions complete).
     return executeApiAction(
         scopeContext = payload.scopeContext,
         apiModel = apiModel,
         args = args,
-        onSuccess = { response ->
-          props.onSuccess?.let {
-              // onSuccess callback - executed when API call succeeds
-              payload.executeAction(
-                  context = context,
-                  actionFlow = it,
-                  actionExecutor = actionExecutor,
-                  stateContext = stateContext,
-                  resourcesProvider = resourceProvider,
-                  incomingScopeContext = DefaultScopeContext(
-                      variables = mapOf("response" to response)
-                  )
-              )
-          }
+        onSuccess = { respObj ->
+            if (onSuccess == null) return@executeApiAction null
+            actionExecutor.execute(
+                context = context,
+                actionFlow = onSuccess,
+                scopeContext = DefaultScopeContext(
+                    variables = mapOf("response" to respObj),
+                    enclosing = payload.scopeContext
+                ),
+                stateContext = stateContext,
+                resourcesProvider = resourceProvider,
+            )
         },
-        onError = { response ->
-            props.onError?.let {
-                // onError callback - executed when API call fails
-                payload.executeAction(
-                    context = context,
-                    actionFlow = it,
-                    actionExecutor = actionExecutor,
-                    stateContext = stateContext,
-                    resourcesProvider = resourceProvider,
-                    incomingScopeContext = DefaultScopeContext(
-                        variables = mapOf("response" to response)
-                    )
-                )
-            }
-        }
+        onError = { respObj ->
+            if (onError == null) return@executeApiAction null
+            actionExecutor.execute(
+                context = context,
+                actionFlow = onError,
+                scopeContext = DefaultScopeContext(
+                    variables = mapOf("response" to respObj),
+                    enclosing = payload.scopeContext
+                ),
+                stateContext = stateContext,
+                resourcesProvider = resourceProvider,
+            )
+        },
     )
 }
 

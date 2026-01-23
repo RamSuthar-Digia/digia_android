@@ -184,7 +184,7 @@ class VWPaginatedListView(
                                 enclosing = payload.scopeContext
                         )
 
-                var result: LoadResult<Any, Any>? = null
+                var result: LoadResult<Any, Any> = LoadResult.Error(Exception("No result from API"))
 
                 executeApiAction(
                         scopeContext = scope,
@@ -226,14 +226,16 @@ class VWPaginatedListView(
                                             prevKey = null,
                                             nextKey = nextKey
                                     )
+                            return@executeApiAction null
                         },
                         onError = { respObj ->
                             val msg = respObj["error"] as? String ?: "Unknown Error"
                             result = LoadResult.Error(Exception(msg))
+                            return@executeApiAction null
                         }
                 )
 
-                return result ?: LoadResult.Error(Exception("No result from API"))
+                return result
             } catch (e: Exception) {
                 return LoadResult.Error(e)
             }
