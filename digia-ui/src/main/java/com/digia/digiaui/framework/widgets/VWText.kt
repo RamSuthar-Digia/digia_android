@@ -1,8 +1,6 @@
 package com.digia.digiaui.framework.widgets
 
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -42,69 +40,86 @@ data class TextProps(
 
 /** Virtual Text widget */
 class VWText(
-    refName: String?,
-    commonProps: CommonProps?,
-    parent: VirtualNode?,
-    parentProps: Props? = null,
-    props: TextProps
-) : VirtualLeafNode<TextProps>(
-    props = props,
-    commonProps = commonProps,
-    parent = parent,
-    refName = refName,
-    parentProps = parentProps
-) {
+        refName: String?,
+        commonProps: CommonProps?,
+        parent: VirtualNode?,
+        parentProps: Props? = null,
+        props: TextProps
+) :
+        VirtualLeafNode<TextProps>(
+                props = props,
+                commonProps = commonProps,
+                parent = parent,
+                refName = refName,
+                parentProps = parentProps
+        ) {
 
     @Composable
     override fun Render(payload: RenderPayload) {
-        // Evaluate expressions
-        val text = payload.evalExpr(props.text) ?: ""
-        val style = payload.textStyle(props.textStyle)
-        val maxLines = payload.evalExpr(props.maxLines)
-        val alignmentStr = payload.evalExpr(props.alignment)
-        val overflowStr = payload.evalExpr(props.overflow)
 
-        // Convert string values to Compose types
-        val textAlign =
-                when (alignmentStr) {
-                    "center" -> TextAlign.Center
-                    "left" -> TextAlign.Left
-                    "right" -> TextAlign.Right
-                    "start" -> TextAlign.Start
-                    "end" -> TextAlign.End
-                    "justify" -> TextAlign.Justify
-                    else -> null
-                }
-
-        val textOverflow =
-                when (overflowStr) {
-                    "clip" -> TextOverflow.Clip
-                    "ellipsis" -> TextOverflow.Ellipsis
-                    "visible" -> TextOverflow.Visible
-                    else -> TextOverflow.Clip
-                }
-
-
-
-        // Render Material3 Text
-        Text(
-                text = text.toString(),
-                style = style ?: androidx.compose.ui.text.TextStyle.Default,
-                maxLines = maxLines ?: Int.MAX_VALUE,
-                textAlign = textAlign,
-                overflow = textOverflow,
-            modifier = Modifier.buildModifier(payload)
+        CommonTextRender(
+                props = props,
+                payload = payload,
+                modifier = Modifier.buildModifier(payload)
         )
     }
 }
 
+@Composable
+internal fun CommonTextRender(
+        props: TextProps,
+        payload: RenderPayload,
+        modifier: Modifier = Modifier
+) {
+    // Evaluate expressions
+    val text = payload.evalExpr(props.text) ?: ""
+    val style = payload.textStyle(props.textStyle)
+    val maxLines = payload.evalExpr(props.maxLines)
+    val alignmentStr = payload.evalExpr(props.alignment)
+    val overflowStr = payload.evalExpr(props.overflow)
+
+    // Convert string values to Compose types
+    val textAlign =
+            when (alignmentStr) {
+                "center" -> TextAlign.Center
+                "left" -> TextAlign.Left
+                "right" -> TextAlign.Right
+                "start" -> TextAlign.Start
+                "end" -> TextAlign.End
+                "justify" -> TextAlign.Justify
+                else -> null
+            }
+
+    val textOverflow =
+            when (overflowStr) {
+                "clip" -> TextOverflow.Clip
+                "ellipsis" -> TextOverflow.Ellipsis
+                "visible" -> TextOverflow.Visible
+                else -> TextOverflow.Clip
+            }
+
+    // Render Material3 Text
+    Text(
+            text = text.toString(),
+            style = style ?: androidx.compose.ui.text.TextStyle.Default,
+            maxLines = maxLines ?: Int.MAX_VALUE,
+            textAlign = textAlign,
+            overflow = textOverflow,
+            modifier = modifier
+    )
+}
+
 /** Builder function for Text widget */
-fun textBuilder(data: VWNodeData, parent: VirtualNode?,registry: VirtualWidgetRegistry): VirtualNode {
+fun textBuilder(
+        data: VWNodeData,
+        parent: VirtualNode?,
+        registry: VirtualWidgetRegistry
+): VirtualNode {
     return VWText(
-        refName = data.refName,
-        commonProps = data.commonProps,
-        parent = parent,
-        parentProps = data.parentProps,
-        props = TextProps.fromJson(data.props.value)
+            refName = data.refName,
+            commonProps = data.commonProps,
+            parent = parent,
+            parentProps = data.parentProps,
+            props = TextProps.fromJson(data.props.value)
     )
 }
