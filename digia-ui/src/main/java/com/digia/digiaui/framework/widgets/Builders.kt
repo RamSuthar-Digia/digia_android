@@ -78,10 +78,11 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
 
     register("fw/sizedBox",::sizedBoxBuilder)
     register("fw/sized_box",::sizedBoxBuilder)
+    register("digia/gridView",::dummyBuilder)
+    register("digia/richText",::richTextBuilder)
     register("digia/timer", ::timerBuilder)
     register("fw/timer", ::timerBuilder)
     register("digia/overlay", ::overlayBuilder)
-    register("digia/richText",::dummyBuilder)
     register("digia/styledHorizontalDivider",::dummyBuilder)
     register("digia/calendar",::dummyBuilder)
 }
