@@ -27,6 +27,16 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
         register("digia/row", ::rowBuilder)
         //    register("digia/stack", ::stackBuilder)
 
+        // Register list widget
+        register("digia/listView", ::listViewBuilder)
+        register("digia/paginatedListView", ::paginatedListViewBuilder)
+
+        register("digia/streamBuilder", ::streamBuilderBuilder)
+
+        register("digia/conditionalBuilder", ::conditionalBuilder)
+        register("digia/conditionalItem", ::conditionalItemBuilder)
+
+
 
 
         // Register list widget
@@ -209,6 +219,10 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
         register("digia/opacity", ::opacityBuilder)
         register("opacity", ::opacityBuilder)
         register("fw/opacity", ::opacityBuilder)
+
+        register("digia/stack", ::stackBuilder)
+        register("digia/styledHorizontalDivider", ::styledHorizontalDividerBuilder)
+
 
         register("digia/stack", ::stackBuilder)
         register("digia/styledHorizontalDivider", ::styledHorizontalDividerBuilder)
