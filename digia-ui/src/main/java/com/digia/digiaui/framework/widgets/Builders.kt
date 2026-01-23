@@ -24,6 +24,7 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
         register("digia/row", ::rowBuilder)
         //    register("digia/stack", ::stackBuilder)
 
+
         // Register list widget
         register("digia/listView", ::listViewBuilder)
 
@@ -145,6 +146,10 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
         register("digia/lottie", ::lottieBuilder)
         register("digia/linearProgressBar", ::linearProgressBarBuilder)
         register("digia/textFormField", ::textFormFieldBuilder)
+        register("digia/videoPlayer", ::videoPlayerBuilder)
+        register("digia/button", ::buttonBuilder)
+        register("digia/image", ::imageBuilder)
+        register("digia/avatar", ::avatarBuilder)
         register("digia/slider", ::sliderBuilder)
         register("digia/videoPlayer", ::videoPlayerBuilder)
         register("digia/button", ::buttonBuilder)
@@ -155,6 +160,10 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
         register("digia/opacity", ::opacityBuilder)
         register("opacity", ::opacityBuilder)
         register("fw/opacity", ::opacityBuilder)
+
+        register("digia/stack", ::stackBuilder)
+        register("digia/styledHorizontalDivider", ::styledHorizontalDividerBuilder)
+
 
         register("digia/stack", ::stackBuilder)
         register("digia/styledHorizontalDivider", ::styledHorizontalDividerBuilder)

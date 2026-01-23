@@ -124,31 +124,31 @@ class VWImage(
 
         RenderNetworkImage(context, finalUrl, imageSrc, modifier, props, svgColor)
     }
+}
 
-    private fun resolveImageUrl(
-            imageSrc: String,
-            sourceType: String,
-            resources: UIResources
-    ): String? {
-        if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://")) {
-            return applyProxyIfNeeded(imageSrc)
-        }
-        if (sourceType == "asset") return null
-        return null
+internal fun resolveImageUrl(
+        imageSrc: String,
+        sourceType: String,
+        resources: UIResources
+): String? {
+    if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://")) {
+        return applyProxyIfNeeded(imageSrc)
     }
+    if (sourceType == "asset") return null
+    return null
+}
 
-    private fun applyProxyIfNeeded(url: String): String {
-        val host = DigiaUIManager.getInstance().host
-        return if (host?.resourceProxyUrl != null) {
-            "${host.resourceProxyUrl}${URLEncoder.encode(url, "UTF-8")}"
-        } else url
-    }
+internal fun applyProxyIfNeeded(url: String): String {
+    val host = DigiaUIManager.getInstance().host
+    return if (host?.resourceProxyUrl != null) {
+        "${host.resourceProxyUrl}${URLEncoder.encode(url, "UTF-8")}"
+    } else url
 }
 
 // ============== Render Functions ==============
 
 @Composable
-private fun RenderNetworkImage(
+internal fun RenderNetworkImage(
         context: android.content.Context,
         finalUrl: String,
         imageSrc: String,
@@ -221,7 +221,7 @@ private fun RenderNetworkImage(
 }
 
 @Composable
-private fun RenderEmpty(modifier: Modifier) {
+internal fun RenderEmpty(modifier: Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (DigiaUIManager.getInstance().host != null) {
             Text("No image source", color = Color.Gray)
@@ -230,28 +230,28 @@ private fun RenderEmpty(modifier: Modifier) {
 }
 
 @Composable
-private fun RenderLoading() {
+internal fun RenderLoading() {
     Box(modifier = Modifier, contentAlignment = Alignment.Center) {
         Text("Loading...", color = Color.Gray)
     }
 }
 
 @Composable
-private fun RenderError(message: String, modifier: Modifier) {
+internal fun RenderError(message: String, modifier: Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text(message, color = Color.Red)
     }
 }
 
 @Composable
-private fun RenderAssetPlaceholder(assetPath: String, modifier: Modifier) {
+internal fun RenderAssetPlaceholder(assetPath: String, modifier: Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text("Asset: $assetPath\n(Not available)", color = Color.Gray)
     }
 }
 
 @Composable
-private fun RenderPreloadedImage(image: ImageBitmap, modifier: Modifier, props: ImageProps) {
+internal fun RenderPreloadedImage(image: ImageBitmap, modifier: Modifier, props: ImageProps) {
     val contentScale = props.fit.toContentScale()
     val alignment = props.alignment.toAlignment()
     val needsClipping = props.fit == "none" || props.fit == "scaleDown"
