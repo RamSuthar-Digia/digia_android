@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,11 +16,11 @@ import com.digia.digiaui.framework.base.VirtualNode
 import com.digia.digiaui.framework.models.CommonProps
 import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
+import com.digia.digiaui.framework.widgets.story.storyBuilder
+import com.digia.digiaui.framework.widgets.story.storyVideoPlayerBuilder
 import com.digia.digiaui.framework.widgets.tabview.tabBarBuilder
 import com.digia.digiaui.framework.widgets.tabview.tabViewContentBuilder
 import com.digia.digiaui.framework.widgets.tabview.tabViewControllerBuilder
-import com.digia.digiaui.framework.widgets.story.storyBuilder
-import com.digia.digiaui.framework.widgets.story.storyVideoPlayerBuilder
 
 /** Register all built-in widgets with the registry */
 fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
@@ -61,10 +60,11 @@ fun DefaultVirtualWidgetRegistry.registerBuiltInWidgets() {
         register("digia/animatedSwitcher", ::animatedSwitcherBuilder)
         register("digia/avatar", ::avatarBuilder)
         register("digia/slider", ::sliderBuilder)
+        register("digia/rangeSlider", ::rangeSliderBuilder)
         register("fw/sized_box", ::sizedBoxBuilder)
         register("digia/safeArea", ::safeAreaBuilder)
         register("digia/gridView", ::gridViewBuilder)
-        register("digia/richText",::richTextBuilder)
+        register("digia/richText", ::richTextBuilder)
         register("digia/pinField", ::pinFieldBuilder)
         register("digia/expandable", ::expandableBuilder)
         register("digia/masonryGridView", ::gridViewBuilder)
@@ -113,7 +113,15 @@ class VWDummy(
                         imageVector = androidx.compose.material.icons.Icons.Default.Close,
                         tint = Color.Red,
                         contentDescription = "Dummy Widget",
-                        modifier = Modifier.buildModifier(payload).padding(4.dp).background(color = Color.DarkGray, shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)),
+                        modifier =
+                                Modifier.buildModifier(payload)
+                                        .padding(4.dp)
+                                        .background(
+                                                color = Color.DarkGray,
+                                                shape =
+                                                        androidx.compose.foundation.shape
+                                                                .RoundedCornerShape(4.dp)
+                                        ),
                 )
         }
 }
