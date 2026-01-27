@@ -438,41 +438,63 @@ data class GradientProps(
         val stops = colorStops.mapNotNull { it.stop?.toFloat() }
         val hasValidStops = stops.size == colors.size
 
-        return when (type) {
-            "linear" -> {
-                if (hasValidStops) {
-                    Brush.linearGradient(
-                            colorStops = stops.zip(colors).toTypedArray(),
-                            start = begin.toGradientOffset(isEnd = false),
-                            end = end.toGradientOffset(isEnd = true)
-                    )
-                } else {
-                    Brush.linearGradient(
-                            colors = colors,
-                            start = begin.toGradientOffset(isEnd = false),
-                            end = end.toGradientOffset(isEnd = true)
-                    )
+        return object : androidx.compose.ui.graphics.ShaderBrush() {
+            override fun createShader(
+                    size: androidx.compose.ui.geometry.Size
+            ): androidx.compose.ui.graphics.Shader {
+                val width = size.width
+                val height = size.height
+
+                fun resolveOffset(alignment: String?): Offset {
+                    return when (alignment) {
+                        "topLeft", "topStart" -> Offset(0f, 0f)
+                        "topCenter" -> Offset(width / 2, 0f)
+                        "topRight", "topEnd" -> Offset(width, 0f)
+                        "centerLeft", "centerStart" -> Offset(0f, height / 2)
+                        "center" -> Offset(width / 2, height / 2)
+                        "centerRight", "centerEnd" -> Offset(width, height / 2)
+                        "bottomLeft", "bottomStart" -> Offset(0f, height)
+                        "bottomCenter" -> Offset(width / 2, height)
+                        "bottomRight", "bottomEnd" -> Offset(width, height)
+                        else -> Offset(0f, 0f) // Default
+                    }
+                }
+
+                return when (type) {
+                    "linear" -> {
+                        val start = resolveOffset(begin ?: "topCenter")
+                        val end = resolveOffset(end ?: "bottomCenter")
+                        androidx.compose.ui.graphics.LinearGradientShader(
+                                from = start,
+                                to = end,
+                                colors = colors,
+                                colorStops = if (hasValidStops) stops else null
+                        )
+                    }
+                    "angular" -> {
+                        val centerOffset = resolveOffset(center ?: "center")
+                        val r = (radius ?: 0.5).toFloat()
+                        // Flutter RadialGradient radius is fraction of shortest side (0.5 = 50% of
+                        // shortest side)
+                        val radiusPx = r * kotlin.math.min(width, height)
+
+                        androidx.compose.ui.graphics.RadialGradientShader(
+                                center = centerOffset,
+                                radius = radiusPx,
+                                colors = colors,
+                                colorStops = if (hasValidStops) stops else null
+                        )
+                    }
+                    else -> {
+                        // Fallback or invalid
+                        androidx.compose.ui.graphics.LinearGradientShader(
+                                from = Offset.Zero,
+                                to = Offset.Zero,
+                                colors = colors
+                        )
+                    }
                 }
             }
-            "angular" -> {
-                // "angular" in schema = RadialGradient in Flutter
-                val centerOffset = center.toGradientOffset()
-                val radiusValue = ((radius ?: 0.5) * 500f).toFloat() // Approximate
-                if (hasValidStops) {
-                    Brush.radialGradient(
-                            colorStops = stops.zip(colors).toTypedArray(),
-                            center = centerOffset,
-                            radius = radiusValue
-                    )
-                } else {
-                    Brush.radialGradient(
-                            colors = colors,
-                            center = centerOffset,
-                            radius = radiusValue
-                    )
-                }
-            }
-            else -> null
         }
     }
 }
