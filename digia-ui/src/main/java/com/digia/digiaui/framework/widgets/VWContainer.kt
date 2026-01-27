@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,10 +41,12 @@ import com.digia.digiaui.framework.models.Props
 import com.digia.digiaui.framework.models.VWNodeData
 import com.digia.digiaui.framework.registerAllChildern
 import com.digia.digiaui.framework.state.LocalStateContextProvider
+import com.digia.digiaui.framework.utils.BoxShadowData
 import com.digia.digiaui.framework.utils.JsonLike
 import com.digia.digiaui.framework.utils.NumUtil
 import com.digia.digiaui.framework.utils.ToUtils
 import com.digia.digiaui.framework.utils.drawCustomBorder
+import com.digia.digiaui.framework.utils.drawCustomShadow
 import com.digia.digiaui.framework.utils.toDp
 import com.digia.digiaui.framework.utils.toPercentFraction
 
@@ -99,6 +100,31 @@ class VWContainer(
          * 1️⃣ Margin (outer spacing – Compose has no real margin)
          * ========================================================== */
         modifier = modifier.padding(ToUtils.edgeInsets(containerProps.margin))
+
+        /* ==========================================================
+         * 1.5 Shadow & Elevation (Before background)
+         * ========================================================== */
+
+        // Custom Shadows
+        val customShadows =
+                containerProps.shadow?.map { shadowProp ->
+                    BoxShadowData(
+                            color = payload.evalColor(shadowProp.color) ?: Color.Black,
+                            blurRadius = (shadowProp.blur ?: 0.0).dp,
+                            spreadRadius = (shadowProp.spreadRadius ?: 0.0).dp,
+                            offset =
+                                    Offset(
+                                            (shadowProp.offsetX ?: 0.0).toFloat(),
+                                            (shadowProp.offsetY ?: 0.0).toFloat()
+                                    )
+                    )
+                }
+        modifier = modifier.drawCustomShadow(shape, customShadows)
+
+        // Elevation
+        if (elevation > 0.dp) {
+            modifier = modifier.shadow(elevation = elevation, shape = shape, clip = false)
+        }
 
         /* ==========================================================
          * 2️⃣ Size & Constraints (PURE FIX)
@@ -265,16 +291,7 @@ class VWContainer(
         /* ==========================================================
          * 9️⃣ Render
          * ========================================================== */
-        if (elevation > 0.dp) {
-            Surface(
-                    modifier = modifier,
-                    shape = shape,
-                    color = Color.Transparent,
-                    shadowElevation = elevation
-            ) { Box(contentAlignment = alignment) { child?.ToWidget(payload) } }
-        } else {
-            Box(modifier = modifier, contentAlignment = alignment) { child?.ToWidget(payload) }
-        }
+        Box(modifier = modifier, contentAlignment = alignment) { child?.ToWidget(payload) }
     }
 }
 
