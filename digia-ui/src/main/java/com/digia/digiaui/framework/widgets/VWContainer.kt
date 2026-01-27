@@ -45,6 +45,7 @@ import com.digia.digiaui.framework.state.LocalStateContextProvider
 import com.digia.digiaui.framework.utils.JsonLike
 import com.digia.digiaui.framework.utils.NumUtil
 import com.digia.digiaui.framework.utils.ToUtils
+import com.digia.digiaui.framework.utils.drawCustomBorder
 import com.digia.digiaui.framework.utils.toDp
 import com.digia.digiaui.framework.utils.toPercentFraction
 
@@ -220,7 +221,15 @@ class VWContainer(
         containerProps.border?.let { border ->
             val color = payload.evalColor(border.borderColor) ?: Color.Transparent
             if (borderWidth > 0.dp) {
-                modifier = modifier.border(borderWidth, color, shape)
+                modifier =
+                        modifier.drawCustomBorder(
+                                shape = shape,
+                                borderWidth = borderWidth,
+                                borderColor = color,
+                                borderPattern = border.borderPattern,
+                                dashPattern = border.dashPattern,
+                                strokeCap = border.strokeCap
+                        )
             }
         }
 
