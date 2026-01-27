@@ -34,7 +34,7 @@ abstract class VirtualLeafNode<T>(
 
         if(alignment!=null){
             Box(
-//                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = alignment
             ) {
                 Render(extendedPayload)
