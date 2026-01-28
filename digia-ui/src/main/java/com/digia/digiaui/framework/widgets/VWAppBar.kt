@@ -177,7 +177,7 @@ class VWAppBar(
             return { leadingWidget.ToWidget(payload) }
         }
 
-        val leadingIconProps = props.leadingIcon?.let { IconsProps.fromJson(it) }
+        val leadingIconProps = props.leadingIcon?.let { VWIconProps.fromJson(it) }
         if (leadingIconProps == null) return null
 
         val iconWidget = VWIcon(
@@ -221,7 +221,7 @@ class VWAppBar(
                 action.ToWidget(payload)
             }
         } else {
-            val trailingIconProps = props.trailingIcon?.let { IconsProps.fromJson(it) }
+            val trailingIconProps = props.trailingIcon?.let { VWIconProps.fromJson(it) }
             if (trailingIconProps != null) {
                 val iconWidget = VWIcon(
                     props = trailingIconProps,
