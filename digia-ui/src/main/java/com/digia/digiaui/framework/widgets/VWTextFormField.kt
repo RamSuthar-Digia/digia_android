@@ -512,10 +512,7 @@ fun textFormFieldBuilder(
     parent: VirtualNode?,
     registry: VirtualWidgetRegistry
 ): VirtualNode {
-    val childrenData =
-        data.childGroups?.mapValues { (_, childrenData) ->
-            childrenData.map { childData -> registry.createWidget(childData, parent) }
-        }
+
 
     return VWTextFormField(
         refName = data.refName,
